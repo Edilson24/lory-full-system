@@ -1,0 +1,427 @@
+# Especificação de Arquitetura e Engenharia de Software: Projeto LORY (v2.0)
+
+Este documento serve como a **Especificação Técnica e de Arquitetura do Sistema** para a nova versão da plataforma **LORY**, remodelada do zero para funcionar sob uma **arquitetura híbrida, multi-tenant (pronta para SaaS/Subscrição) e Offline-First**.
+
+Este documento foi estruturado para servir de **Contexto/Prompt Mestre** para assistentes de código AI (como Gemini no Android Studio, GitHub Copilot ou ChatGPT), garantindo que todo o desenvolvimento siga os mesmos padrões, modelos de dados e fluxos de negócio.
+
+---
+
+## 1. Visão Geral e Modelo de Negócio
+
+### 1.1 Objetivos
+
+* **Objetivo Acadêmico:** Submissão do projeto da disciplina de Aplicações Móveis da Universidade Rovuma (Licenciatura em Informática).
+
+
+* **Objetivo Comercial/Escalabilidade:** Estruturar a plataforma como um software de subscrição (SaaS) multi-tenant, permitindo que diferentes instituições de ensino (ou diferentes turmas/cursos de uma faculdade) operem de forma isolada no mesmo sistema.
+
+### 1.2 Atores e Papéis do Sistema (RBAC)
+
+1. **SUPER_ADMIN (Administrador Global / Plataforma Lory):**
+* *Acesso:* Exclusivamente via Aplicação Web (Fase 2).
+* *Ações:* Gestão de Instituições/Faculdades, criação de turmas, atribuição de licenças/subscrições e monitoria global de métricas.
+
+
+2. **ADMIN_INSTITUICAO / DIRECTOR_CURSO (Administrador da Faculdade):**
+* *Acesso:* Aplicação Web.
+* *Ações:* Visualização de relatórios acadêmicos globais de suas turmas, auditoria e gestão dos Chefes de Turma.
+
+
+3. **CHEFE / ADJUNTO (Chefe de Turma):**
+* *Acesso:* Aplicação Móvel Android e Aplicação Web.
+
+
+* *Ações:* Gestão operacional da turma — aprovação de estudantes, gestão de semestres/cadeiras/docentes, criação de grupos/temas, lançamento de eventos/testes, marcação de presenças, criação de enquetes e emissão de avisos urgentes.
+
+4. **ESTUDANTE:**
+* *Acesso:* Aplicação Móvel Android.
+
+
+* *Ações:* Visualização de cadeiras onde está inscrito, consulta de eventos/prazos, submissão de trabalhos/apresentações do grupo, consulta de presenças/faltas, votação em enquetes e marcação de reuniões do grupo.
+
+
+## 2. Arquitetura do Sistema
+
+```
+┌───────────────────────────────────────────────────────────────────────────────────┐
+│                                CLIENTES (FRONTEND)                                │
+│                                                                                   │
+│  ┌─────────────────────────────────┐           ┌───────────────────────────────┐  │
+│  │     Aplicação Android (Java)    │           │      Painel Web (Fase 2)      │  │
+│  │   Room DB + WorkManager + Retrofit │           │   React / Vue / HTML+JS       │  │
+│  └────────────────┬────────────────┘           └──────────────┬────────────────┘  │
+└───────────────────┼───────────────────────────────────────────┼───────────────────┘
+                    │                                           │
+                    │ HTTPs / REST (JSON) + JWT                 │ HTTPs / REST
+                    ▼                                           ▼
+┌───────────────────────────────────────────────────────────────────────────────────┐
+│                         CAMADA DE EXPOSIÇÃO E SEGURANÇA                           │
+│                                                                                   │
+│                           Cloudflare Tunnel (cloudflared)                         │
+│                    (Endpoint público HTTPS com URL/Domínio fixo)                  │
+└───────────────────────────────────┬───────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌───────────────────────────────────────────────────────────────────────────────────┐
+│                          BACKEND & REGRA DE NEGÓCIO                               │
+│                                                                                   │
+│                         API Python (FastAPI / Uvicorn)                            │
+│                 - Autenticação & Validação JWT                                    │
+│                 - Resolução de Conflitos de Sincronização                         │
+│                 - Isolamento Multi-tenant                                         │
+└───────────────────────────────────┬───────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌───────────────────────────────────────────────────────────────────────────────────┐
+│                                CAMADA DE DADOS                                    │
+│                                                                                   │
+│                       MySQL Local (Porta 3306 Interna)                            │
+│                             (MySQL Workbench)                                     │
+└───────────────────────────────────────────────────────────────────────────────────┘
+
+```
+
+### 2.1 Decisões de Arquitetura
+
+1. **Offline-First no Mobile:** O aplicativo Android em Java opera com a base de dados **Room (SQLite local)**. Qualquer operação de escrita é efetuada localmente primeiro e enviada ao backend via **WorkManager** assim que houver conectividade.
+
+
+2. **Identificadores Únicos Universais (UUIDv4):** Todas as chaves primárias (`id`) de todas as tabelas devem ser geradas no cliente ou backend como **Strings UUIDv4** (ex: `c8d10b80-3333-4f32-8418-e32a67bcda4a`), evitando conflitos de ID auto-incrementado durante criações offline paralelas.
+3. **Comunicação Segura:** O servidor MySQL **nunca** fica exposto diretamente na porta 3306. Apenas a API Python (FastAPI) acessa o banco via `localhost`. A API é exposta para a internet via **Cloudflare Tunnel**, fornecendo terminação SSL (HTTPS) automática e URL fixo.
+
+---
+
+## 3. Modelo de Dados Unificado (Pronto para Escalabilidade Multi-Tenant)
+
+O modelo relacional suporta multi-tenancy através do campo `turma_id` em entidades de nível operacional.
+
+-- ============================================================================
+-- ESTRUTURA DO BANCO DE DADOS MYSQL (SERVIDOR CENTRAL) - encontre no ficheiro "esquema.sql"
+-- ============================================================================
+
+## 4. Estratégia e Mapeamento do Room (Android Java)
+
+Na base de dados Room do dispositivo móvel, todas as entidades mantêm réplicas exatas das colunas do MySQL, acrescidas dos campos de controlo de sincronização offline.
+
+### 4.1 Campos Padrão de Sincronização
+
+Em todas as tabelas locais do Room, adicionar:
+
+* `sync_status`: String (`"PENDING_INSERT"`, `"PENDING_UPDATE"`, `"SYNCED"`).
+* `updated_at`: Long (Timestamp Unix em milissegundos).
+
+### 4.2 Exemplo de Entidade Room em Java (`EventoEntity.java`)
+
+```java
+package moz.univrovuma.lory.data.local.entity;
+
+import androidx.annotation.NonNull;
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
+
+@Entity(tableName = "eventos")
+public class EventoEntity {
+    @PrimaryKey
+    @NonNull
+    public String id; // UUID gerado localmente
+    
+    public String cadeiraId;
+    public String grupoId;
+    public String tipo; // TESTE, APRESENTACAO, OUTRO
+    public String titulo;
+    public String dataEvento; // Formato ISO-8601
+    public String estado; // PENDENTE, CONCLUIDO
+    
+    // Controle de Sincronização
+    public String syncStatus; // PENDING_INSERT, PENDING_UPDATE, SYNCED
+    public long updatedAt;
+
+    public EventoEntity(@NonNull String id, String cadeiraId, String grupoId, String tipo, String titulo, String dataEvento, String estado, String syncStatus, long updatedAt) {
+        this.id = id;
+        this.cadeiraId = cadeiraId;
+        this.grupoId = grupoId;
+        this.tipo = tipo;
+        this.titulo = titulo;
+        this.dataEvento = dataEvento;
+        this.estado = estado;
+        this.syncStatus = syncStatus;
+        this.updatedAt = updatedAt;
+    }
+}
+
+```
+
+---
+
+## 5. Implementação da API Python (FastAPI + JWT + MySQL)
+
+A API Python intermediará o acesso entre as aplicações e o banco de dados local MySQL.
+
+### 5.1 Dependências em Python (`requirements.txt`)
+
+```text
+fastapi==0.110.0
+uvicorn==0.28.0
+mysql-connector-python==8.3.0
+pyjwt==2.8.0
+passlib[bcrypt]==1.7.4
+pydantic==2.6.4
+
+```
+
+### 5.2 Servidor FastAPI Principal (`main.py`)
+
+```python
+from fastapi import FastAPI, Depends, HTTPException, status, Header
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from pydantic import BaseModel
+import mysql.connector
+import jwt
+import hashlib
+import os
+from datetime import datetime, timedelta
+from typing import List, Optional
+
+app = FastAPI(title="LORY API Backend", version="2.0")
+security = HTTPBearer()
+
+SECRET_KEY = "LORY_SUPER_SECRET_KEY_PRODUCTION_REPLACE_ME"
+ALGORITHM = "HS256"
+
+# Conexão com o Banco MySQL Local
+def get_db():
+    connection = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="", # Insira a sua senha do MySQL Workbench
+        database="lory_db",
+        port=3306
+    )
+    try:
+        yield connection
+    finally:
+        connection.close()
+
+# Helper de Criptografia de Senhas
+def hash_password(password: str, salt: str) -> str:
+    return hashlib.sha256((password + salt).encode('utf-8')).hexdigest()
+
+# Modelo Pydantic para Login
+class LoginSchema(BaseModel):
+    email: str
+    senha: str
+
+class EventoSyncSchema(BaseModel):
+    id: str
+    cadeira_id: str
+    grupo_id: Optional[str] = None
+    tipo: str
+    titulo: str
+    data_evento: str
+    estado: str
+    updated_at: int
+
+# Rotas de Autenticação
+@app.post("/api/v1/auth/login")
+def login(credentials: LoginSchema, db=Depends(get_db)):
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM utilizadores WHERE email = %s", (credentials.email,))
+    user = cursor.fetchone()
+    
+    if not user:
+        raise HTTPException(status_code=400, detail="Credenciais inválidas.")
+    
+    hashed = hash_password(credentials.senha, user["salt"])
+    if hashed != user["senha_hash"]:
+        raise HTTPException(status_code=400, detail="Credenciais inválidas.")
+        
+    if user["estado"] == "PENDENTE":
+        raise HTTPException(status_code=403, detail="Aguarde a confirmação do chefe [RN-02]")
+    if user["estado"] == "REJEITADO":
+        raise HTTPException(status_code=403, detail="Utilizador rejeitado pelo chefe [RN-03]")
+
+    # Gera Token JWT
+    expira = datetime.utcnow() + timedelta(days=30)
+    token_payload = {
+        "sub": user["id"],
+        "turma_id": user["turma_id"],
+        "papel": user["papel"],
+        "exp": expira
+    }
+    token = jwt.encode(token_payload, SECRET_KEY, algorithm=ALGORITHM)
+    
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "id": user["id"],
+            "nome": user["nome"],
+            "email": user["email"],
+            "papel": user["papel"],
+            "turma_id": user["turma_id"]
+        }
+    }
+
+# Endpoint de Sincronização Bidirecional de Eventos
+@app.post("/api/v1/sync/eventos")
+def sync_eventos(
+    eventos_locais: List[EventoSyncSchema], 
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db=Depends(get_db)
+):
+    # Validar JWT
+    try:
+        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Token inválido ou expirado.")
+
+    cursor = db.cursor(dictionary=True)
+    
+    # 1. Processar dados vindos do Mobile (Cliente -> Servidor)
+    for ev in eventos_locais:
+        cursor.execute("SELECT updated_at FROM eventos WHERE id = %s", (ev.id,))
+        existente = cursor.fetchone()
+        
+        if not existente:
+            # Inserir novo
+            sql = """INSERT INTO eventos (id, cadeira_id, grupo_id, tipo, titulo, data_evento, estado) 
+                     VALUES (%s, %s, %s, %s, %s, %s, %s)"""
+            cursor.execute(sql, (ev.id, ev.cadeira_id, ev.grupo_id, ev.tipo, ev.titulo, ev.data_evento, ev.estado))
+        else:
+            # Resolução de conflitos por "Last Write Wins" (Maior Timestamp)
+            ts_servidor = int(existente["updated_at"].timestamp() * 1000) if existente["updated_at"] else 0
+            if ev.updated_at > ts_servidor:
+                sql = """UPDATE eventos SET cadeira_id=%s, grupo_id=%s, tipo=%s, titulo=%s, data_evento=%s, estado=%s 
+                         WHERE id=%s"""
+                cursor.execute(sql, (ev.cadeira_id, ev.grupo_id, ev.tipo, ev.titulo, ev.data_evento, ev.estado, ev.id))
+
+    db.commit()
+
+    # 2. Retornar todos os registros atualizados do banco para o Mobile (Servidor -> Cliente)
+    cursor.execute("SELECT * FROM eventos WHERE cadeira_id IN (SELECT id FROM cadeiras WHERE turma_id = %s)", (payload["turma_id"],))
+    eventos_servidor = cursor.fetchall()
+    
+    return {"status": "success", "eventos": eventos_servidor}
+
+```
+
+---
+
+## 6. Configuração do Cloudflare Tunnel
+
+Para disponibilizar o backend FastAPI na internet sem necessidade de IP público estático nem redirecionamento de portas:
+
+1. **Instalar o `cloudflared`:**
+Baixar e instalar o executável oficial da Cloudflare para o seu SO (Windows/Linux/macOS).
+2. **Iniciar o Túnel:**
+Com o servidor Python a rodar na porta `8000` (`uvicorn main:app --port 8000`), executar:
+```bash
+cloudflared tunnel --url http://localhost:8000
+
+```
+
+
+3. **Obter URL Seguro:**
+O terminal gerará um subdomínio `.trycloudflare.com` com suporte HTTPS (ex: `[https://lory-api-demo.trycloudflare.com](https://lory-api-demo.trycloudflare.com)`).
+4. **Para produção (Domínio Fixo Gratuito):**
+Vincular uma conta Cloudflare e executar `cloudflared tunnel run <NOME_DO_TUNEL>` para fixar um subdomínio como `api.suafaculdade.com`.
+
+---
+
+## 7. Módulo de Sincronização em Segundo Plano no Android (`SyncWorker.java`)
+
+A classe `WorkManager` do Android garante que os dados registados localmente no Room sejam sincronizados com o servidor em segundo plano assim que houver acesso à internet.
+
+```java
+package moz.univrovuma.lory.sync;
+
+import android.content.Context;
+import androidx.annotation.NonNull;
+import androidx.work.Worker;
+import androidx.work.WorkerParameters;
+
+import java.util.List;
+
+import moz.univrovuma.lory.data.local.AppDatabase;
+import moz.univrovuma.lory.data.local.entity.EventoEntity;
+import moz.univrovuma.lory.data.remote.ApiClient;
+import moz.univrovuma.lory.data.remote.ApiService;
+import retrofit2.Response;
+
+public class SyncWorker extends Worker {
+
+    public SyncWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
+        super(context, workerParams);
+    }
+
+    @NonNull
+    @Override
+    public Result doWork() {
+        AppDatabase db = AppDatabase.getInstance(getApplicationContext());
+        ApiService api = ApiClient.getClient().create(ApiService.class);
+
+        // Fetch registros pendentes de envio
+        List<EventoEntity> pendentes = db.eventoDao().getEventosPendentes();
+
+        if (!pendentes.isEmpty()) {
+            try {
+                // Enviar para a API Python
+                Response<Void> response = api.sincronizarEventos(pendentes).execute();
+                if (response.isSuccessful()) {
+                    // Atualizar estado local para SYNCED
+                    for (EventoEntity e : pendentes) {
+                        e.syncStatus = "SYNCED";
+                        db.eventoDao().update(e);
+                    }
+                } else {
+                    return Result.retry();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                return Result.retry();
+            }
+        }
+
+        return Result.success();
+    }
+}
+
+```
+
+---
+
+## 8. Check-list de Regras de Negócio Importantes
+
+
+
+Quando estiver a gerar código com auxílio da AI dentro do Android Studio, garanta a conformidade com as regras extraídas do levantamento de requisitos:
+
+* **[RN-01] Primeiro Arranque:** Se não houver utilizadores no banco local/remoto, a app abre na tela de Configuração Inicial e cria a conta do CHEFE com estado `APROVADO`.
+
+
+* **[RN-02] Registo de Estudantes:** Novos registos criam utilizadores com estado `PENDENTE`. Ao fazer login, deve bloquear a entrada e exibir a mensagem: *"Aguarde a confirmação do chefe"*.
+
+
+* **[RN-03] Aprovação/Rejeição:** O Chefe aprova/rejeita pedidos pendentes. Utilizadores `REJEITADOS` são impedidos de autenticar.
+
+
+* **[RN-04] Criptografia de Palavra-passe:** Senhas devem ser salvas com hash SHA-256 e Salt gerado dinamicamente.
+
+
+* **[RN-10 e RN-11] Visibilidade de Cadeiras:** Estudantes só veem cadeiras em que estão inscritos e onde `concluida = false`. Quando o chefe marca uma cadeira como concluída, ela é arquivada e visível apenas para o chefe.
+
+
+* **[RN-15 e RN-16] Formação Aleatória de Grupos (Random):** Se `nºGrupos × máximo < nºEstudantes`, a operação deve ser interrompida exibindo uma mensagem de erro.
+
+
+
+---
+
+## 9. Como Utilizar Este Documento Como Contexto no Gemini / Android Studio
+
+Para instruir o assistente no Android Studio ao desenvolver qualquer componente do projeto Lory:
+
+1. Copie o conteúdo das **Seções 2, 3 e 4** deste documento.
+2. Adicione a sua instrução específica no final.
+3. **Exemplo de comando:**
+> *"Com base na documentação da arquitetura do projeto LORY (especialmente o modelo de dados e as entidades Room), gere para mim a classe `CadeiraDao.java` e o ViewModel `CadeiraViewModel.java` em Java, suportando salvamento local com `sync_status = 'PENDING_INSERT'` e consulta de cadeiras ativas do estudante."*

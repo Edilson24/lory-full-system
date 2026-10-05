@@ -1,0 +1,100 @@
+O desenvolvimento de sistemas híbridos/SaaS modernos é feito separando claramente o Backend (Servidor) e o Frontend/Client (Móvel) em pastas e IDES distintas.Trabalhará com 3 ambientes abertos em simultâneo:
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                            SEU COMPUTADOR DE TRABALHO                           │
+├──────────────────────────┬──────────────────────────┬───────────────────────────┤
+│    1. MySQL Workbench    │       2. PyCharm         │    3. Android Studio      │
+│  (Base de Dados Central) │    (API Python FastAPI)  │   (Aplicação Móvel Java)  │
+├──────────────────────────┼──────────────────────────┼───────────────────────────┤
+│ Cole e execute o script  │ Cole o código Python     │ Cole as classes Java      │
+│ SQL da Seção 3 da        │ `main.py` e configure    │ (Entities, DAOs,          │
+│ documentação para criar  │ as dependências em       │ WorkManager, Retrofit)    │
+│ a estrutura lory_db.     │ `requirements.txt`.      │ na estrutura do projeto.  │
+└──────────────────────────┴──────────────────────────┴───────────────────────────┘
+
+2. Passo a Passo Completo de Configuração do Ambiente
+[x] Passo 1: MySQL Workbench (Servidor de Banco de Dados)
+Criação do banco de dados
+
+[x] Passo 2: PyCharm ou VS Code (Backend Python)
+Crie uma pasta no seu computador chamada lory-backend.
+Abra essa pasta no PyCharm (ou VS Code).
+Crie um ambiente virtual em Python (venv):
+
+python -m venv venv
+# No Windows:
+venv\Scripts\activate
+
+Crie o ficheiro requirements.txt, cole as dependências da Seção 5.1 da documentação e instale:
+pip install -r requirements.txt
+
+Crie o ficheiro main.py, cole o código da Seção 5.2 da documentação e ajuste a senha do MySQL no método get_db():
+Pythonpassword="SUA_SENHA_DO_MYSQL_AQUI"
+
+Inicie o servidor FastAPI localmente:
+uvicorn main:app --reload --port 8000
+
+Teste abrindo o navegador em:
+ [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+ (deve carregar a interface gráfica Swagger da sua API).
+
+[x] Passo 3: Cloudflare Tunnel (Exposição Segura)
+Baixe o executável cloudflared para o seu sistema operacional.
+Abra o Terminal/Prompt de Comando na pasta onde o cloudflared está instalado.
+Execute o comando para mapear a porta 8000 do seu servidor Python:
+cloudflared tunnel --url http://localhost:8000
+
+Copie o URL público gerado no terminal
+(ex: [https://xxxx-xxxx.trycloudflare.com](https://xxxx-xxxx.trycloudflare.com)).
+Este é o URL base que o Android usará para se conectar.
+
+Passo 4: Android Studio (App Móvel em Java)
+Crie um novo projeto no Android Studio com a opção Empty Views Activity.
+Nome da aplicação: Lory. Pacote: moz.univrovuma.lory (ou o de sua preferência). Linguagem: Java.
+No ficheiro build.gradle (Module :app), adicione as dependências do Room, Retrofit e WorkManager.
+Crie a estrutura de pacotes:
+moz.univrovuma.lory.data.local (para Room DB, Entities e DAOs - Seção 4 da documentação)
+moz.univrovuma.lory.data.remote (para Retrofit Client e Interfaces)
+moz.univrovuma.lory.sync (para o SyncWorker e agendadores - Seção 7 da documentação)
+moz.univrovuma.lory.ui (para Activities, Fragments e Adapters)
+3. Roadmap Sequenciado de DesenvolvimentoPara garantir que o projeto seja construído de forma sólida sem erros de integração, siga a ordem das fases abaixo:
+[FASE 1: Infraestrutura e BD] ──> [FASE 2: API & Auth] ──> [FASE 3: Room & Sync] ──> [FASE 4: UI & Módulos] ──> [FASE 5: Testes]
+
+FASE 1: Preparação da Base de Dados e Servidor Local
+[x] 1.1. Schema MySQL: Executar o script completo SQL no MySQL Workbench para disponibilizar as tabelas.
+[x] 1.2. Mapeamento de Usuários de Teste: Inserir manualmente ou via script inicial o primeiro registro de instituição e turma no MySQL para testes de vínculo.
+[x] 1.3. Teste de Conexão Python: Garantir que o mysql-connector-python consegue executar queries simples no lory_db.
+
+FASE 2: Autenticação e Endpoints da API Python
+[ ] 2.1. Rota de Login (/api/v1/auth/login): Implementar geração de tokens JWT e verificação de hash de senha + salt.
+[ ] 2.2. Validação de Regras de Acesso: Adicionar validação para barrar utilizadores com estado PENDENTE ou REJEITADO.
+[ ] 2.3. Endpoints de Sincronização Base: Criar as rotas POST para receber lotes de dados do Android e responder com os dados atualizados do banco MySQL.
+[ ] 2.4. Exposição com Cloudflare Tunnel: Testar chamadas no Postman ou Bruno enviando requisições para o link HTTPS do Cloudflare.
+
+FASE 3: Camada de Dados Android (Room + Retrofit + WorkManager)
+[ ] 3.1. Definição do Room Local: Criar o AppDatabase.java com todas as Entities usando UUID para a chave primária e colunas sync_status e updated_at.
+[ ] 3.2. Configuração do Retrofit: Instanciar o cliente HTTP apontando para o URL público do Cloudflare Tunnel, adicionando o Interceptor para incluir o cabeçalho Authorization: Bearer <token>.
+[ ] 3.3. Implementação do SyncWorker: Programar o serviço em segundo plano com WorkManager para verificar pendências locais (PENDING_INSERT, PENDING_UPDATE) e enviá-las para a API Python assim que houver rede.
+
+FASE 4: Interface do Usuário (UI) e Regras de Negócio no Mobile
+[ ] 4.1. Módulo de Autenticação (AuthActivity):
+Tela de Login e Tela de Registo de Estudantes (Estado PENDENTE).
+Tela de Configuração Inicial no primeiro arranque (Criação do Chefe APROVADO).
+
+[ ] 4.2. Módulo Principal e Gestão da Turma (Chefe/Adjunto):
+Ecrã de aprovação/rejeição de pedidos pendentes de estudantes.
+Gestão de Semestres, Cadeiras e Docentes.   Sorteio e formação de Grupos (Manual e Algoritmo Random).
+
+[ ] 4.3. Módulo Operacional e Acadêmico:
+Lançamento de Eventos (Testes, Apresentações, Prazos).
+Marcação de Sessões e Presenças de Aulas.
+Criação e votação em Enquetes.
+Gestão de Trabalhos/Uploads de ficheiros (PDF/PPTX).
+
+[ ] 4.4. Notificações Internas:
+Implementação da Central de Notificações local na app.
+
+FASE 5: Testes de Integração, Resolução de Conflitos e Preparação para a Fase 2 (Web)
+[ ] 5.1. Teste do Fluxo Offline: Criar registros na App Android com o Wi-Fi desligado, religar a internet e verificar se o WorkManager envia os dados com sucesso para o MySQL Workbench.
+[ ] 5.2. Teste Multi-Dispositivo:Instalar a APK em dois celulares (ou um celular e um emulador), simular ações do Chefe e do Estudante e validar se os dados são sincronizados para ambos.
+[ ] 5.3. Preparação do Terreno para a Fase 2 (Painel Web): Como o banco MySQL e a API Python já estarão operacionais com suporte multi-tenant, a criação do Painel Web para o Administrador será apenas a construção das páginas em React/HTML consumindo os mesmos endpoints da API.
