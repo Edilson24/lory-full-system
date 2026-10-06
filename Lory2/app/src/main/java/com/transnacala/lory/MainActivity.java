@@ -18,14 +18,22 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.transnacala.lory.databinding.ActivityMainBinding;
+import com.transnacala.lory.repository.EnqueteRepository;
+import com.transnacala.lory.repository.EventoRepository;
+import com.transnacala.lory.repository.GrupoRepository;
 import com.transnacala.lory.ui.fragment.HomeFragment;
 import com.transnacala.lory.ui.fragment.PollsFragment;
 import com.transnacala.lory.ui.fragment.ProfileFragment;
 import com.transnacala.lory.ui.fragment.TasksFragment;
+import com.transnacala.lory.utils.SessionManager;
 
 public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
+    private EventoRepository eventoRepository;
+    private EnqueteRepository enqueteRepository;
+    private GrupoRepository grupoRepository;
+    private SessionManager sessionManager;
     private int currentTab = 1; // 1: Home, 2: Tasks, 3: Polls, 4: Profile
 
     @Override
@@ -41,6 +49,12 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0);
             return insets;
         });
+
+        // Initialize repositories & session
+        eventoRepository = new EventoRepository(this);
+        enqueteRepository = new EnqueteRepository(this);
+        grupoRepository = new GrupoRepository(this);
+        sessionManager = new SessionManager(this);
 
         // Set default fragment
         if (savedInstanceState == null) {
@@ -109,17 +123,24 @@ public class MainActivity extends AppCompatActivity {
 
         dialogView.findViewById(R.id.btn_create_event).setOnClickListener(v -> {
             dialog.dismiss();
-            Toast.makeText(this, "Criar Novo Evento / Avaliação", Toast.LENGTH_SHORT).show();
+            eventoRepository.insertEvento("c1", "TESTE", "Novo Teste de Engenharia de Software", "2026-10-25T09:00:00");
+            Toast.makeText(this, "Evento salvo localmente e agendado para sincronização!", Toast.LENGTH_SHORT).show();
         });
 
         dialogView.findViewById(R.id.btn_create_poll).setOnClickListener(v -> {
             dialog.dismiss();
-            Toast.makeText(this, "Criar Nova Enquete da Turma", Toast.LENGTH_SHORT).show();
+            if (!sessionManager.isChefe()) {
+                Toast.makeText(this, "Apenas o Chefe de Turma pode criar enquetes.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            enqueteRepository.insertEnquete(sessionManager.getTurmaId(), "Qual o melhor dia para a palestra sobre IA?", "2026-10-18", sessionManager.getUserName());
+            Toast.makeText(this, "Enquete criada localmente e agendada para sincronização!", Toast.LENGTH_SHORT).show();
         });
 
         dialogView.findViewById(R.id.btn_create_group).setOnClickListener(v -> {
             dialog.dismiss();
-            Toast.makeText(this, "Criar Novo Grupo de Trabalho", Toast.LENGTH_SHORT).show();
+            grupoRepository.insertGrupo("c1", "Grupo 3 - Redes & IoT", "Automação Residencial com Esp32");
+            Toast.makeText(this, "Grupo criado localmente e agendado para sincronização!", Toast.LENGTH_SHORT).show();
         });
 
         dialog.show();

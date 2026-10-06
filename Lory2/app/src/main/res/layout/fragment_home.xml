@@ -26,14 +26,14 @@
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Menu"
+                android:contentDescription="@string/desc_menu"
                 android:src="@drawable/ic_grid_menu" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
-                android:text="Home"
+                android:text="@string/nav_home"
                 android:textColor="@color/text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -45,7 +45,7 @@
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Notificações"
+                android:contentDescription="@string/desc_notifications"
                 android:src="@drawable/ic_notification_bell" />
         </RelativeLayout>
 
@@ -54,7 +54,7 @@
             android:id="@+id/tv_greeting_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Hi Jenifer!"
+            android:text="Olá!"
             android:textColor="@color/text_primary"
             android:textSize="26sp"
             android:textStyle="bold" />
@@ -65,7 +65,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:layout_marginBottom="20dp"
-            android:text="Good Morning"
+            android:text="@string/good_morning"
             android:textColor="@color/text_secondary"
             android:textSize="14sp" />
 
@@ -83,7 +83,7 @@
             <ImageView
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:contentDescription="Pesquisar"
+                android:contentDescription="@string/desc_search"
                 android:src="@drawable/ic_search" />
 
             <EditText
@@ -92,7 +92,7 @@
                 android:layout_height="match_parent"
                 android:layout_marginStart="12dp"
                 android:background="@null"
-                android:hint="Search"
+                android:hint="@string/search_hint"
                 android:imeOptions="actionSearch"
                 android:inputType="text"
                 android:textColor="@color/text_primary"
@@ -124,7 +124,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Welcome!"
+                        android:text="@string/welcome_title"
                         android:textColor="@color/text_primary"
                         android:textSize="18sp"
                         android:textStyle="bold" />
@@ -133,7 +133,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="Let's schedule your projects"
+                        android:text="@string/welcome_subtitle"
                         android:textColor="@color/text_secondary"
                         android:textSize="13sp" />
                 </LinearLayout>
@@ -142,7 +142,7 @@
                     android:layout_width="64dp"
                     android:layout_height="64dp"
                     android:layout_gravity="center_vertical"
-                    android:contentDescription="Ilustração"
+                    android:contentDescription="@string/desc_icon"
                     android:src="@drawable/ic_dashboard"
                     app:tint="@color/primary_dark_blue" />
             </LinearLayout>
@@ -158,7 +158,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
-                android:text="Ongoing Projects"
+                android:text="@string/ongoing_projects"
                 android:textColor="@color/text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -168,21 +168,35 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
-                android:text="view all"
+                android:text="@string/view_all"
                 android:textColor="@color/text_secondary"
                 android:textSize="13sp" />
         </RelativeLayout>
 
+        <!-- Empty State Message -->
+        <TextView
+            android:id="@+id/tv_empty_state_projects"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="20dp"
+            android:gravity="center"
+            android:text="@string/empty_cadeiras"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp"
+            android:visibility="gone" />
+
         <!-- Projects Grid (2 Columns x 2 Rows) -->
         <GridLayout
+            android:id="@+id/grid_projects"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:columnCount="2"
             android:alignmentMode="alignMargins"
             android:useDefaultMargins="true">
 
-            <!-- Card 1: Mobile App (Dark Blue) -->
+            <!-- Card 1 (Dark Blue) -->
             <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/card1_container"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_columnWeight="1"
@@ -193,7 +207,6 @@
                     android:id="@+id/card1_date"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="May 30, 2022"
                     android:textColor="@color/text_white_muted"
                     android:textSize="11sp"
                     app:layout_constraintStart_toStartOf="parent"
@@ -202,7 +215,7 @@
                 <ImageView
                     android:layout_width="18dp"
                     android:layout_height="18dp"
-                    android:contentDescription="Mais"
+                    android:contentDescription="@string/desc_more"
                     android:src="@drawable/ic_more_vert"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
@@ -213,7 +226,7 @@
                     android:layout_width="28dp"
                     android:layout_height="28dp"
                     android:layout_marginTop="16dp"
-                    android:contentDescription="Ícone"
+                    android:contentDescription="@string/desc_icon"
                     android:src="@drawable/ic_mobile_app"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/card1_date"
@@ -224,7 +237,6 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
-                    android:text="Mobile App"
                     android:textColor="@color/text_white"
                     android:textSize="14sp"
                     android:textStyle="bold"
@@ -236,7 +248,6 @@
                     android:id="@+id/card1_sub"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="E-Commerce"
                     android:textColor="@color/text_white_muted"
                     android:textSize="11sp"
                     app:layout_constraintStart_toStartOf="@id/card1_title"
@@ -247,7 +258,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
-                    android:text="Progress"
+                    android:text="@string/progress_label"
                     android:textColor="@color/text_white_muted"
                     android:textSize="10sp"
                     app:layout_constraintStart_toStartOf="parent"
@@ -257,7 +268,6 @@
                     android:id="@+id/card1_pct"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="50%"
                     android:textColor="@color/text_white"
                     android:textSize="10sp"
                     android:textStyle="bold"
@@ -265,18 +275,19 @@
                     app:layout_constraintTop_toTopOf="@id/card1_label_progress" />
 
                 <ProgressBar
+                    android:id="@+id/card1_progress"
                     style="?android:attr/progressBarStyleHorizontal"
                     android:layout_width="match_parent"
                     android:layout_height="6dp"
                     android:layout_marginTop="4dp"
                     android:max="100"
-                    android:progress="50"
                     android:progressDrawable="@drawable/bg_progress_dark"
                     app:layout_constraintTop_toBottomOf="@id/card1_label_progress" />
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <!-- Card 2: Dashboard (Light) -->
+            <!-- Card 2 (Light) -->
             <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/card2_container"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_columnWeight="1"
@@ -287,7 +298,6 @@
                     android:id="@+id/card2_date"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="May 30, 2022"
                     android:textColor="@color/text_secondary"
                     android:textSize="11sp"
                     app:layout_constraintStart_toStartOf="parent"
@@ -296,7 +306,7 @@
                 <ImageView
                     android:layout_width="18dp"
                     android:layout_height="18dp"
-                    android:contentDescription="Mais"
+                    android:contentDescription="@string/desc_more"
                     android:src="@drawable/ic_more_vert"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
@@ -307,7 +317,7 @@
                     android:layout_width="28dp"
                     android:layout_height="28dp"
                     android:layout_marginTop="16dp"
-                    android:contentDescription="Ícone"
+                    android:contentDescription="@string/desc_icon"
                     android:src="@drawable/ic_dashboard"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/card2_date"
@@ -318,7 +328,6 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
-                    android:text="Dashboard"
                     android:textColor="@color/text_primary"
                     android:textSize="14sp"
                     android:textStyle="bold"
@@ -330,7 +339,6 @@
                     android:id="@+id/card2_sub"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Hotel"
                     android:textColor="@color/text_secondary"
                     android:textSize="11sp"
                     app:layout_constraintStart_toStartOf="@id/card2_title"
@@ -341,7 +349,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
-                    android:text="Progress"
+                    android:text="@string/progress_label"
                     android:textColor="@color/text_secondary"
                     android:textSize="10sp"
                     app:layout_constraintStart_toStartOf="parent"
@@ -351,7 +359,6 @@
                     android:id="@+id/card2_pct"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="50%"
                     android:textColor="@color/text_primary"
                     android:textSize="10sp"
                     android:textStyle="bold"
@@ -359,18 +366,19 @@
                     app:layout_constraintTop_toTopOf="@id/card2_label_progress" />
 
                 <ProgressBar
+                    android:id="@+id/card2_progress"
                     style="?android:attr/progressBarStyleHorizontal"
                     android:layout_width="match_parent"
                     android:layout_height="6dp"
                     android:layout_marginTop="4dp"
                     android:max="100"
-                    android:progress="50"
                     android:progressDrawable="@drawable/bg_progress_light"
                     app:layout_constraintTop_toBottomOf="@id/card2_label_progress" />
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <!-- Card 3: Banner (Light) -->
+            <!-- Card 3 (Light) -->
             <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/card3_container"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_columnWeight="1"
@@ -381,7 +389,6 @@
                     android:id="@+id/card3_date"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="May 30, 2022"
                     android:textColor="@color/text_secondary"
                     android:textSize="11sp"
                     app:layout_constraintStart_toStartOf="parent"
@@ -390,7 +397,7 @@
                 <ImageView
                     android:layout_width="18dp"
                     android:layout_height="18dp"
-                    android:contentDescription="Mais"
+                    android:contentDescription="@string/desc_more"
                     android:src="@drawable/ic_more_vert"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
@@ -401,7 +408,7 @@
                     android:layout_width="28dp"
                     android:layout_height="28dp"
                     android:layout_marginTop="16dp"
-                    android:contentDescription="Ícone"
+                    android:contentDescription="@string/desc_icon"
                     android:src="@drawable/ic_marketing"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/card3_date"
@@ -412,7 +419,6 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
-                    android:text="Banner"
                     android:textColor="@color/text_primary"
                     android:textSize="14sp"
                     android:textStyle="bold"
@@ -424,7 +430,6 @@
                     android:id="@+id/card3_sub"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Marketing"
                     android:textColor="@color/text_secondary"
                     android:textSize="11sp"
                     app:layout_constraintStart_toStartOf="@id/card3_title"
@@ -435,7 +440,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
-                    android:text="Progress"
+                    android:text="@string/progress_label"
                     android:textColor="@color/text_secondary"
                     android:textSize="10sp"
                     app:layout_constraintStart_toStartOf="parent"
@@ -445,7 +450,6 @@
                     android:id="@+id/card3_pct"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="40%"
                     android:textColor="@color/text_primary"
                     android:textSize="10sp"
                     android:textStyle="bold"
@@ -453,18 +457,19 @@
                     app:layout_constraintTop_toTopOf="@id/card3_label_progress" />
 
                 <ProgressBar
+                    android:id="@+id/card3_progress"
                     style="?android:attr/progressBarStyleHorizontal"
                     android:layout_width="match_parent"
                     android:layout_height="6dp"
                     android:layout_marginTop="4dp"
                     android:max="100"
-                    android:progress="40"
                     android:progressDrawable="@drawable/bg_progress_light"
                     app:layout_constraintTop_toBottomOf="@id/card3_label_progress" />
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <!-- Card 4: UI/UX (Light) -->
+            <!-- Card 4 (Light) -->
             <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/card4_container"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_columnWeight="1"
@@ -475,7 +480,6 @@
                     android:id="@+id/card4_date"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="May 30, 2022"
                     android:textColor="@color/text_secondary"
                     android:textSize="11sp"
                     app:layout_constraintStart_toStartOf="parent"
@@ -484,7 +488,7 @@
                 <ImageView
                     android:layout_width="18dp"
                     android:layout_height="18dp"
-                    android:contentDescription="Mais"
+                    android:contentDescription="@string/desc_more"
                     android:src="@drawable/ic_more_vert"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
@@ -495,7 +499,7 @@
                     android:layout_width="28dp"
                     android:layout_height="28dp"
                     android:layout_marginTop="16dp"
-                    android:contentDescription="Ícone"
+                    android:contentDescription="@string/desc_icon"
                     android:src="@drawable/ic_ui_ux"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/card4_date"
@@ -506,7 +510,6 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
-                    android:text="UI/UX"
                     android:textColor="@color/text_primary"
                     android:textSize="14sp"
                     android:textStyle="bold"
@@ -518,7 +521,6 @@
                     android:id="@+id/card4_sub"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Task Manager"
                     android:textColor="@color/text_secondary"
                     android:textSize="11sp"
                     app:layout_constraintStart_toStartOf="@id/card4_title"
@@ -529,7 +531,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
-                    android:text="Progress"
+                    android:text="@string/progress_label"
                     android:textColor="@color/text_secondary"
                     android:textSize="10sp"
                     app:layout_constraintStart_toStartOf="parent"
@@ -539,7 +541,6 @@
                     android:id="@+id/card4_pct"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="80%"
                     android:textColor="@color/text_primary"
                     android:textSize="10sp"
                     android:textStyle="bold"
@@ -547,12 +548,12 @@
                     app:layout_constraintTop_toTopOf="@id/card4_label_progress" />
 
                 <ProgressBar
+                    android:id="@+id/card4_progress"
                     style="?android:attr/progressBarStyleHorizontal"
                     android:layout_width="match_parent"
                     android:layout_height="6dp"
                     android:layout_marginTop="4dp"
                     android:max="100"
-                    android:progress="80"
                     android:progressDrawable="@drawable/bg_progress_light"
                     app:layout_constraintTop_toBottomOf="@id/card4_label_progress" />
             </androidx.constraintlayout.widget.ConstraintLayout>

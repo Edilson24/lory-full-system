@@ -18,71 +18,30 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
-            android:text="Enquetes &amp; Votações da Turma"
+            android:text="@string/polls_title"
             android:textColor="@color/text_primary"
             android:textSize="22sp"
             android:textStyle="bold" />
 
-        <!-- Poll Card 1 -->
-        <androidx.cardview.widget.CardView
+        <!-- Empty State -->
+        <TextView
+            android:id="@+id/tv_empty_state_polls"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp">
+            android:gravity="center"
+            android:padding="20dp"
+            android:text="@string/empty_enquetes"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp"
+            android:visibility="gone" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_welcome_card"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Data do Teste 2 de Redes de Computadores?"
-                    android:textColor="@color/text_primary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:layout_marginBottom="12dp"
-                    android:text="Criado pelo Chefe de Turma • Expira em 2 dias"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="12sp" />
-
-                <!-- Option A -->
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="44dp"
-                    android:layout_marginBottom="8dp"
-                    android:background="@drawable/bg_card_light"
-                    android:gravity="center_vertical"
-                    android:paddingStart="14dp"
-                    android:paddingEnd="14dp"
-                    android:text="A) Terça-feira (10:00 - 12:00)"
-                    android:textColor="@color/text_primary"
-                    android:textSize="13sp" />
-
-                <!-- Option B -->
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="44dp"
-                    android:background="@drawable/bg_card_dark"
-                    android:gravity="center_vertical"
-                    android:paddingStart="14dp"
-                    android:paddingEnd="14dp"
-                    android:text="B) Quinta-feira (14:00 - 16:00) [Votado]"
-                    android:textColor="@color/white"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
+        <!-- Dynamic List of Enquetes -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_enquetes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:nestedScrollingEnabled="false"
+            tools:listitem="@layout/item_enquete_card" />
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

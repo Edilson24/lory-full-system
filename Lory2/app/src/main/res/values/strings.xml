@@ -1,3 +1,55 @@
 <resources>
     <string name="app_name">Lory</string>
+
+    <!-- Navigation Tabs -->
+    <string name="nav_home">Início</string>
+    <string name="nav_tasks">Cadeiras</string>
+    <string name="nav_polls">Enquetes</string>
+    <string name="nav_profile">Perfil</string>
+    <string name="btn_add">Adicionar</string>
+
+    <!-- Home Screen -->
+    <string name="greeting_format">Olá, %1$s!</string>
+    <string name="good_morning">Bom dia</string>
+    <string name="good_afternoon">Boa tarde</string>
+    <string name="good_evening">Boa noite</string>
+    <string name="search_hint">Pesquisar cadeiras ou trabalhos...</string>
+    <string name="welcome_title">Bem-vindo!</string>
+    <string name="welcome_subtitle">Agende e acompanhe os trabalhos da turma</string>
+    <string name="ongoing_projects">Cadeiras em Andamento</string>
+    <string name="view_all">ver todos</string>
+    <string name="progress_label">Progresso</string>
+    <string name="pct_format">%1$d%%</string>
+    <string name="empty_cadeiras">Nenhuma cadeira cadastrada no momento.</string>
+    <string name="empty_eventos">Nenhum evento agendado no momento.</string>
+    <string name="empty_enquetes">Nenhuma enquete ativa no momento.</string>
+    <string name="empty_grupos">Nenhum grupo cadastrado no momento.</string>
+
+    <!-- Profile Screen -->
+    <string name="role_chefe">Chefe de Turma</string>
+    <string name="role_estudante">Estudante</string>
+    <string name="stat_cadeiras">Cadeiras</string>
+    <string name="stat_eventos">Avaliações</string>
+    <string name="stat_estudantes">Estudantes</string>
+    <string name="folders_title">Pastas &amp; Ficheiros</string>
+    <string name="my_team_title">Grupos &amp; Equipas</string>
+    <string name="project_in_progress">Em Andamento</string>
+    <string name="project_completed">Concluído</string>
+
+    <!-- Tasks & Polls -->
+    <string name="my_tasks_title">Minhas Cadeiras &amp; Avaliações</string>
+    <string name="polls_title">Enquetes &amp; Votações da Turma</string>
+    <string name="create_what_title">O que deseja criar?</string>
+    <string name="create_event">Novo Evento / Avaliação</string>
+    <string name="create_poll">Criar Nova Enquete da Turma</string>
+    <string name="create_group">Novo Grupo de Trabalho</string>
+
+    <!-- Accessibility Descriptions -->
+    <string name="desc_menu">Menu principal</string>
+    <string name="desc_notifications">Notificações</string>
+    <string name="desc_search">Pesquisar</string>
+    <string name="desc_more">Mais opções</string>
+    <string name="desc_icon">Ícone</string>
+    <string name="desc_avatar">Foto do Perfil</string>
+    <string name="desc_folder">Pasta de Ficheiros</string>
 </resources>

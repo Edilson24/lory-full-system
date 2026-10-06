@@ -19,7 +19,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="20dp"
-        android:text="O que deseja criar?"
+        android:text="@string/create_what_title"
         android:textColor="@color/text_primary"
         android:textSize="18sp"
         android:textStyle="bold" />
@@ -40,7 +40,7 @@
         <ImageView
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:contentDescription="Evento"
+            android:contentDescription="@string/create_event"
             android:src="@drawable/ic_task"
             app:tint="@color/primary_dark_blue" />
 
@@ -48,7 +48,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:text="Novo Evento / Avaliação"
+            android:text="@string/create_event"
             android:textColor="@color/text_primary"
             android:textSize="14sp"
             android:textStyle="bold" />
@@ -70,7 +70,7 @@
         <ImageView
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:contentDescription="Enquete"
+            android:contentDescription="@string/create_poll"
             android:src="@drawable/ic_poll"
             app:tint="@color/primary_dark_blue" />
 
@@ -78,7 +78,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:text="Criar Nova Enquete da Turma"
+            android:text="@string/create_poll"
             android:textColor="@color/text_primary"
             android:textSize="14sp"
             android:textStyle="bold" />
@@ -99,7 +99,7 @@
         <ImageView
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:contentDescription="Grupo"
+            android:contentDescription="@string/create_group"
             android:src="@drawable/ic_folder"
             app:tint="@color/primary_dark_blue" />
 
@@ -107,7 +107,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:text="Novo Grupo de Trabalho"
+            android:text="@string/create_group"
             android:textColor="@color/text_primary"
             android:textSize="14sp"
             android:textStyle="bold" />

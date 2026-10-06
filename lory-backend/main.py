@@ -1,10 +1,9 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Header
+from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import mysql.connector
 import jwt
 import hashlib
-import os
 from datetime import datetime, timedelta
 from typing import List, Optional
 
@@ -20,7 +19,7 @@ def get_db():
     connection = mysql.connector.connect(
         host="localhost",
         user="root",
-        password="root",  # Insira a sua senha do MySQL Workbench
+        password="root",  # Insira a sua senha do MySQL Workbench aqui
         database="lory_db",
         port=3306
     )
@@ -30,12 +29,14 @@ def get_db():
         connection.close()
 
 
-# Helper de Criptografia de Senhas
 def hash_password(password: str, salt: str) -> str:
     return hashlib.sha256((password + salt).encode('utf-8')).hexdigest()
 
 
-# Modelo Pydantic para Login
+# ============================================================================
+# SCHEMAS PYDANTIC (Aceitam camelCase enviado pelo Android/Retrofit)
+# ============================================================================
+
 class LoginSchema(BaseModel):
     email: str
     senha: str
@@ -43,35 +44,61 @@ class LoginSchema(BaseModel):
 
 class EventoSyncSchema(BaseModel):
     id: str
-    cadeira_id: str
-    grupo_id: Optional[str] = None
+    cadeiraId: str = Field(..., alias="cadeira_id")
+    grupoId: Optional[str] = Field(None, alias="grupo_id")
     tipo: str
     titulo: str
-    data_evento: str
+    dataEvento: str = Field(..., alias="data_evento")
     estado: str
-    updated_at: int
+    updatedAt: int = Field(..., alias="updated_at")
+
+    class Config:
+        populate_by_name = True
 
 
-# Rotas de Autenticação
+class EnqueteSyncSchema(BaseModel):
+    id: str
+    turmaId: Optional[str] = Field(None, alias="turma_id")
+    pergunta: str
+    prazo: str
+    criadaPor: Optional[str] = Field(None, alias="criada_por")
+    updatedAt: int = Field(..., alias="updated_at")
+
+    class Config:
+        populate_by_name = True
+
+
+# ============================================================================
+# ROTAS / ENDPOINTS
+# ============================================================================
+
 @app.post("/api/v1/auth/login")
 def login(credentials: LoginSchema, db=Depends(get_db)):
     cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM utilizadores WHERE email = %s", (credentials.email,))
+
+    # 1. Buscar utilizador pelo email enviado (removendo espaços acidentais)
+    email_limpo = credentials.email.strip()
+    cursor.execute("SELECT * FROM utilizadores WHERE LOWER(email) = LOWER(%s)", (email_limpo,))
     user = cursor.fetchone()
 
     if not user:
-        raise HTTPException(status_code=400, detail="Credenciais inválidas.")
+        raise HTTPException(status_code=400, detail="E-mail ou senha incorretos.")
 
-    hashed = hash_password(credentials.senha, user["salt"])
-    if hashed != user["senha_hash"]:
-        raise HTTPException(status_code=400, detail="Credenciais inválidas.")
+    # 2. Recalcular o Hash com a senha enviada e o salt armazenado no banco
+    senha_enviada = credentials.senha.strip()
+    hashed_enviado = hash_password(senha_enviada, user["salt"])
 
+    # Se o hash for diferente (comparação case-insensitive)
+    if hashed_enviado.lower() != user["senha_hash"].lower():
+        raise HTTPException(status_code=400, detail="E-mail ou senha incorretos.")
+
+    # 3. Validar estado do utilizador
     if user["estado"] == "PENDENTE":
-        raise HTTPException(status_code=403, detail="Aguarde a confirmação do chefe [RN-02]")
+        raise HTTPException(status_code=403, detail="Aguarde a confirmação do chefe")
     if user["estado"] == "REJEITADO":
-        raise HTTPException(status_code=403, detail="Utilizador rejeitado pelo chefe [RN-03]")
+        raise HTTPException(status_code=403, detail="Utilizador rejeitado pelo chefe")
 
-    # Gera Token JWT
+    # 4. Gerar Token JWT de 30 dias
     expira = datetime.utcnow() + timedelta(days=30)
     token_payload = {
         "sub": user["id"],
@@ -94,14 +121,12 @@ def login(credentials: LoginSchema, db=Depends(get_db)):
     }
 
 
-# Endpoint de Sincronização Bidirecional de Eventos
 @app.post("/api/v1/sync/eventos")
 def sync_eventos(
         eventos_locais: List[EventoSyncSchema],
         credentials: HTTPAuthorizationCredentials = Depends(security),
         db=Depends(get_db)
 ):
-    # Validar JWT
     try:
         payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
     except jwt.PyJWTError:
@@ -109,33 +134,46 @@ def sync_eventos(
 
     cursor = db.cursor(dictionary=True)
 
-    # 1. Processar dados vindos do Mobile (Cliente -> Servidor)
     for ev in eventos_locais:
         cursor.execute("SELECT updated_at FROM eventos WHERE id = %s", (ev.id,))
         existente = cursor.fetchone()
 
         if not existente:
-            # Inserir novo
             sql = """INSERT INTO eventos (id, cadeira_id, grupo_id, tipo, titulo, data_evento, estado) 
                      VALUES (%s, %s, %s, %s, %s, %s, %s)"""
-            cursor.execute(sql, (ev.id, ev.cadeira_id, ev.grupo_id, ev.tipo, ev.titulo, ev.data_evento, ev.estado))
+            cursor.execute(sql, (ev.id, ev.cadeiraId, ev.grupoId, ev.tipo, ev.titulo, ev.dataEvento, ev.estado))
         else:
-            # Resolução de conflitos por "Last Write Wins" (Maior Timestamp)
             ts_servidor = int(existente["updated_at"].timestamp() * 1000) if existente["updated_at"] else 0
-            if ev.updated_at > ts_servidor:
+            if ev.updatedAt > ts_servidor:
                 sql = """UPDATE eventos SET cadeira_id=%s, grupo_id=%s, tipo=%s, titulo=%s, data_evento=%s, estado=%s 
                          WHERE id=%s"""
-                cursor.execute(sql, (ev.cadeira_id, ev.grupo_id, ev.tipo, ev.titulo, ev.data_evento, ev.estado, ev.id))
+                cursor.execute(sql, (ev.cadeiraId, ev.grupoId, ev.tipo, ev.titulo, ev.dataEvento, ev.estado, ev.id))
 
     db.commit()
+    return {"status": "success", "message": "Eventos sincronizados com sucesso."}
 
-    # 2. Retornar todos os registros atualizados do banco para o Mobile (Servidor -> Cliente)
-    cursor.execute("SELECT * FROM eventos WHERE cadeira_id IN (SELECT id FROM cadeiras WHERE turma_id = %s)",
-                   (payload["turma_id"],))
-    eventos_servidor = cursor.fetchall()
 
-    return {"status": "success", "eventos": eventos_servidor}
+@app.post("/api/v1/sync/enquetes")
+def sync_enquetes(
+        enquetes_locais: List[EnqueteSyncSchema],
+        credentials: HTTPAuthorizationCredentials = Depends(security),
+        db=Depends(get_db)
+):
+    try:
+        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Token inválido ou expirado.")
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    cursor = db.cursor(dictionary=True)
+
+    for enq in enquetes_locais:
+        cursor.execute("SELECT id FROM enquetes WHERE id = %s", (enq.id,))
+        existente = cursor.fetchone()
+
+        if not existente:
+            sql = """INSERT INTO enquetes (id, turma_id, pergunta, prazo, criada_por) 
+                     VALUES (%s, %s, %s, %s, %s)"""
+            cursor.execute(sql, (enq.id, payload.get("turma_id"), enq.pergunta, enq.prazo, payload.get("sub")))
+
+    db.commit()
+    return {"status": "success", "message": "Enquetes sincronizadas com sucesso."}

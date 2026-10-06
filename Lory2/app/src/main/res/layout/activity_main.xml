@@ -59,7 +59,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="Home"
+                    android:text="@string/nav_home"
                     android:textColor="@color/primary_dark_blue"
                     android:textSize="11sp"
                     android:textStyle="bold" />
@@ -80,6 +80,7 @@
                     android:id="@+id/ic_nav_tasks"
                     android:layout_width="22dp"
                     android:layout_height="22dp"
+                    android:contentDescription="@string/nav_tasks"
                     android:src="@drawable/ic_task"
                     app:tint="@color/text_secondary" />
 
@@ -88,7 +89,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="My task"
+                    android:text="@string/nav_tasks"
                     android:textColor="@color/text_secondary"
                     android:textSize="11sp" />
             </LinearLayout>
@@ -114,6 +115,7 @@
                     android:id="@+id/ic_nav_polls"
                     android:layout_width="22dp"
                     android:layout_height="22dp"
+                    android:contentDescription="@string/nav_polls"
                     android:src="@drawable/ic_poll"
                     app:tint="@color/text_secondary" />
 
@@ -122,7 +124,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="Enquetes"
+                    android:text="@string/nav_polls"
                     android:textColor="@color/text_secondary"
                     android:textSize="11sp" />
             </LinearLayout>
@@ -142,6 +144,7 @@
                     android:id="@+id/ic_nav_profile"
                     android:layout_width="22dp"
                     android:layout_height="22dp"
+                    android:contentDescription="@string/nav_profile"
                     android:src="@drawable/ic_profile"
                     app:tint="@color/text_secondary" />
 
@@ -150,7 +153,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="Profile"
+                    android:text="@string/nav_profile"
                     android:textColor="@color/text_secondary"
                     android:textSize="11sp" />
             </LinearLayout>
@@ -164,7 +167,7 @@
         android:id="@+id/fab_add"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:contentDescription="Adicionar"
+        android:contentDescription="@string/btn_add"
         android:src="@drawable/ic_add"
         app:backgroundTint="@color/primary_dark_blue"
         app:elevation="12dp"

@@ -18,122 +18,30 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
-            android:text="Minhas Tarefas &amp; Cadeiras"
+            android:text="@string/my_tasks_title"
             android:textColor="@color/text_primary"
             android:textSize="22sp"
             android:textStyle="bold" />
 
-        <!-- Task Card 1 -->
-        <androidx.cardview.widget.CardView
+        <!-- Empty State -->
+        <TextView
+            android:id="@+id/tv_empty_state_tasks"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp">
+            android:gravity="center"
+            android:padding="20dp"
+            android:text="@string/empty_cadeiras"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp"
+            android:visibility="gone" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_welcome_card"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Engenharia de Software"
-                        android:textColor="@color/text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:text="Em Andamento"
-                        android:textColor="@color/primary_blue"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-                </RelativeLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Entrega do Protótipo Lory - Fase 1"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="13sp" />
-
-                <ProgressBar
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="6dp"
-                    android:layout_marginTop="12dp"
-                    android:max="100"
-                    android:progress="65"
-                    android:progressDrawable="@drawable/bg_progress_light" />
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <!-- Task Card 2 -->
-        <androidx.cardview.widget.CardView
+        <!-- Dynamic List of Cadeiras -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_cadeiras"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_welcome_card"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Sistemas Distribuídos"
-                        android:textColor="@color/text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:text="Concluído"
-                        android:textColor="@color/status_green"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-                </RelativeLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Apresentação do Artigo Científico"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="13sp" />
-
-                <ProgressBar
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="6dp"
-                    android:layout_marginTop="12dp"
-                    android:max="100"
-                    android:progress="100"
-                    android:progressDrawable="@drawable/bg_progress_light" />
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
+            android:nestedScrollingEnabled="false"
+            tools:listitem="@layout/item_cadeira_card" />
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>
