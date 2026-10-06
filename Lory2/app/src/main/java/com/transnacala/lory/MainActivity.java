@@ -4,7 +4,10 @@ import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -17,15 +20,22 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.transnacala.lory.data.local.AppDatabase;
+import com.transnacala.lory.data.local.entity.CadeiraEntity;
 import com.transnacala.lory.databinding.ActivityMainBinding;
 import com.transnacala.lory.repository.EnqueteRepository;
 import com.transnacala.lory.repository.EventoRepository;
 import com.transnacala.lory.repository.GrupoRepository;
+import com.transnacala.lory.sync.SyncManager;
 import com.transnacala.lory.ui.fragment.HomeFragment;
 import com.transnacala.lory.ui.fragment.PollsFragment;
 import com.transnacala.lory.ui.fragment.ProfileFragment;
 import com.transnacala.lory.ui.fragment.TasksFragment;
 import com.transnacala.lory.utils.SessionManager;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -55,6 +65,9 @@ public class MainActivity extends AppCompatActivity {
         enqueteRepository = new EnqueteRepository(this);
         grupoRepository = new GrupoRepository(this);
         sessionManager = new SessionManager(this);
+
+        // Disparar Sincronização Inicial (Pull do Servidor para o Room) ao abrir
+        SyncManager.enqueueSync(this);
 
         // Set default fragment
         if (savedInstanceState == null) {
@@ -117,30 +130,162 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showCreateOptionsDialog() {
-        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        BottomSheetDialog optionsDialog = new BottomSheetDialog(this);
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_create_options, binding.getRoot(), false);
-        dialog.setContentView(dialogView);
+        optionsDialog.setContentView(dialogView);
 
         dialogView.findViewById(R.id.btn_create_event).setOnClickListener(v -> {
-            dialog.dismiss();
-            eventoRepository.insertEvento("c1", "TESTE", "Novo Teste de Engenharia de Software", "2026-10-25T09:00:00");
-            Toast.makeText(this, "Evento salvo localmente e agendado para sincronização!", Toast.LENGTH_SHORT).show();
+            optionsDialog.dismiss();
+            showAddEventDialog();
         });
 
         dialogView.findViewById(R.id.btn_create_poll).setOnClickListener(v -> {
-            dialog.dismiss();
+            optionsDialog.dismiss();
             if (!sessionManager.isChefe()) {
                 Toast.makeText(this, "Apenas o Chefe de Turma pode criar enquetes.", Toast.LENGTH_SHORT).show();
                 return;
             }
-            enqueteRepository.insertEnquete(sessionManager.getTurmaId(), "Qual o melhor dia para a palestra sobre IA?", "2026-10-18", sessionManager.getUserName());
-            Toast.makeText(this, "Enquete criada localmente e agendada para sincronização!", Toast.LENGTH_SHORT).show();
+            showAddPollDialog();
         });
 
         dialogView.findViewById(R.id.btn_create_group).setOnClickListener(v -> {
+            optionsDialog.dismiss();
+            showAddGroupDialog();
+        });
+
+        optionsDialog.show();
+    }
+
+    private void showAddEventDialog() {
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        View view = getLayoutInflater().inflate(R.layout.dialog_add_event, binding.getRoot(), false);
+        dialog.setContentView(view);
+
+        EditText etTitle = view.findViewById(R.id.et_event_title);
+        EditText etDate = view.findViewById(R.id.et_event_date);
+        Spinner spType = view.findViewById(R.id.sp_event_type);
+        Spinner spCadeira = view.findViewById(R.id.sp_event_cadeira);
+
+        // Types Spinner
+        String[] types = new String[]{"TESTE", "APRESENTACAO", "OUTRO"};
+        ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, types);
+        typeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spType.setAdapter(typeAdapter);
+
+        // Cadeiras Spinner from Room
+        List<CadeiraEntity> cadeirasList = new ArrayList<>();
+        List<String> cadeirasNames = new ArrayList<>();
+
+        Executors.newSingleThreadExecutor().execute(() -> {
+            AppDatabase db = AppDatabase.getInstance(MainActivity.this);
+            List<CadeiraEntity> list = db.cadeiraDao().getCadeirasPendentes();
+            if (list != null && !list.isEmpty()) {
+                cadeirasList.addAll(list);
+                for (CadeiraEntity c : list) {
+                    cadeirasNames.add(c.nome);
+                }
+            } else {
+                cadeirasNames.add("Engenharia de Software II");
+            }
+
+            runOnUiThread(() -> {
+                ArrayAdapter<String> cadAdapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, cadeirasNames);
+                cadAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                spCadeira.setAdapter(cadAdapter);
+            });
+        });
+
+        view.findViewById(R.id.btn_cancel_event).setOnClickListener(v -> dialog.dismiss());
+
+        view.findViewById(R.id.btn_save_event).setOnClickListener(v -> {
+            String title = etTitle.getText().toString().trim();
+            String date = etDate.getText().toString().trim();
+            String selectedType = spType.getSelectedItem() != null ? spType.getSelectedItem().toString() : "TESTE";
+
+            if (title.isEmpty()) {
+                etTitle.setError("Informe o título");
+                return;
+            }
+
+            if (date.isEmpty()) {
+                date = "2026-11-15 10:00:00";
+            }
+
+            String cadeiraId = "cad-01";
+            int selectedPos = spCadeira.getSelectedItemPosition();
+            if (selectedPos >= 0 && selectedPos < cadeirasList.size()) {
+                cadeiraId = cadeirasList.get(selectedPos).id;
+            }
+
+            eventoRepository.insertEvento(cadeiraId, selectedType, title, date);
             dialog.dismiss();
-            grupoRepository.insertGrupo("c1", "Grupo 3 - Redes & IoT", "Automação Residencial com Esp32");
-            Toast.makeText(this, "Grupo criado localmente e agendado para sincronização!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(MainActivity.this, "Evento criado com sucesso!", Toast.LENGTH_SHORT).show();
+        });
+
+        dialog.show();
+    }
+
+    private void showAddPollDialog() {
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        View view = getLayoutInflater().inflate(R.layout.dialog_add_poll, binding.getRoot(), false);
+        dialog.setContentView(view);
+
+        EditText etQuestion = view.findViewById(R.id.et_poll_question);
+        EditText etDeadline = view.findViewById(R.id.et_poll_deadline);
+
+        view.findViewById(R.id.btn_cancel_poll).setOnClickListener(v -> dialog.dismiss());
+
+        view.findViewById(R.id.btn_save_poll).setOnClickListener(v -> {
+            String question = etQuestion.getText().toString().trim();
+            String deadline = etDeadline.getText().toString().trim();
+
+            if (question.isEmpty()) {
+                etQuestion.setError("Informe a pergunta");
+                return;
+            }
+
+            if (deadline.isEmpty()) {
+                deadline = "2026-11-20 23:59:59";
+            } else if (!deadline.contains(" ")) {
+                deadline += " 23:59:59";
+            }
+
+            String turmaId = sessionManager.getTurmaId();
+            if (turmaId == null || turmaId.isEmpty()) {
+                turmaId = "turma-inf-2026";
+            }
+
+            enqueteRepository.insertEnquete(turmaId, question, deadline, sessionManager.getUserName());
+            dialog.dismiss();
+            Toast.makeText(MainActivity.this, "Enquete criada com sucesso!", Toast.LENGTH_SHORT).show();
+        });
+
+        dialog.show();
+    }
+
+    private void showAddGroupDialog() {
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        View view = getLayoutInflater().inflate(R.layout.dialog_add_group, binding.getRoot(), false);
+        dialog.setContentView(view);
+
+        EditText etName = view.findViewById(R.id.et_group_name);
+        EditText etTheme = view.findViewById(R.id.et_group_theme);
+
+        view.findViewById(R.id.btn_cancel_group).setOnClickListener(v -> dialog.dismiss());
+
+        view.findViewById(R.id.btn_save_group).setOnClickListener(v -> {
+            String name = etName.getText().toString().trim();
+            String theme = etTheme.getText().toString().trim();
+
+            if (name.isEmpty()) {
+                etName.setError("Informe o nome do grupo");
+                return;
+            }
+
+            String cadeiraId = "cad-01";
+            grupoRepository.insertGrupo(cadeiraId, name, theme.isEmpty() ? "Tema Geral" : theme);
+            dialog.dismiss();
+            Toast.makeText(MainActivity.this, "Grupo criado com sucesso!", Toast.LENGTH_SHORT).show();
         });
 
         dialog.show();

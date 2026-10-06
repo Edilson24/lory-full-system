@@ -1,3 +1,5 @@
+Aqui contem a estrutura do código em python da API rodando lá no pycharm kkkk:
+
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
@@ -135,20 +137,6 @@ def sync_eventos(
     cursor = db.cursor(dictionary=True)
 
     for ev in eventos_locais:
-        # 1. Validar se a cadeira_id enviada existe no MySQL
-        cursor.execute("SELECT id FROM cadeiras WHERE id = %s", (ev.cadeiraId,))
-        cad = cursor.fetchone()
-
-        # Se a cadeira não existir no banco, vincula à primeira cadeira cadastrada
-        if not cad:
-            cursor.execute("SELECT id FROM cadeiras LIMIT 1")
-            primeira_cad = cursor.fetchone()
-            if primeira_cad:
-                ev.cadeiraId = primeira_cad["id"]
-            else:
-                continue  # Pula o evento se não houver cadeiras cadastradas no MySQL
-
-        # 2. Inserir ou Atualizar o Evento no MySQL
         cursor.execute("SELECT updated_at FROM eventos WHERE id = %s", (ev.id,))
         existente = cursor.fetchone()
 
@@ -185,123 +173,10 @@ def sync_enquetes(
         existente = cursor.fetchone()
 
         if not existente:
-            sql = """INSERT INTO enquetes (id, turma_id, pergunta, prazo, criada_por) 
+            sql = """INSERT INTO enquetes (id, turma_id, pergunta, prazo, criada_por)
                      VALUES (%s, %s, %s, %s, %s)"""
             cursor.execute(sql, (enq.id, payload.get("turma_id"), enq.pergunta, enq.prazo, payload.get("sub")))
 
     db.commit()
     return {"status": "success", "message": "Enquetes sincronizadas com sucesso."}
 
-# ============================================================================
-# SCHEMAS ADICIONAIS PARA GRUPOS
-# ============================================================================
-
-class GrupoSyncSchema(BaseModel):
-    id: str
-    cadeiraId: str = Field(..., alias="cadeira_id")
-    nome: str
-    tema: Optional[str] = None
-    dataCriacao: Optional[str] = Field(None, alias="data_criacao")
-    estado: Optional[str] = None
-    updatedAt: int = Field(..., alias="updated_at")
-
-    class Config:
-        populate_by_name = True
-
-# ============================================================================
-# ROTAS PULL (SERVIDOR -> CLIENTE / ROOM)
-# ============================================================================
-
-@app.get("/api/v1/cadeiras")
-def get_cadeiras(
-        credentials: HTTPAuthorizationCredentials = Depends(security),
-        db=Depends(get_db)
-):
-    try:
-        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
-    except jwt.PyJWTError:
-        raise HTTPException(status_code=401, detail="Token inválido ou expirado.")
-
-    cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT id, turma_id AS turmaId, semestre_id AS semestreId, docente_id AS docenteId, nome, concluida FROM cadeiras WHERE turma_id = %s", (payload.get("turma_id"),))
-    return cursor.fetchall()
-
-
-@app.get("/api/v1/enquetes")
-def get_enquetes(
-        credentials: HTTPAuthorizationCredentials = Depends(security),
-        db=Depends(get_db)
-):
-    try:
-        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
-    except jwt.PyJWTError:
-        raise HTTPException(status_code=401, detail="Token inválido ou expirado.")
-
-    cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT id, turma_id AS turmaId, pergunta, prazo, criada_por AS criadaPor FROM enquetes WHERE turma_id = %s", (payload.get("turma_id"),))
-    return cursor.fetchall()
-
-
-@app.get("/api/v1/eventos")
-def get_eventos(
-        credentials: HTTPAuthorizationCredentials = Depends(security),
-        db=Depends(get_db)
-):
-    try:
-        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
-    except jwt.PyJWTError:
-        raise HTTPException(status_code=401, detail="Token inválido ou expirado.")
-
-    cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT e.id, e.cadeira_id AS cadeiraId, e.grupo_id AS grupoId, e.tipo, e.titulo, e.data_evento AS dataEvento, e.estado FROM eventos e JOIN cadeiras c ON e.cadeira_id = c.id WHERE c.turma_id = %s", (payload.get("turma_id"),))
-    return cursor.fetchall()
-
-
-@app.get("/api/v1/grupos")
-def get_grupos(
-        credentials: HTTPAuthorizationCredentials = Depends(security),
-        db=Depends(get_db)
-):
-    try:
-        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
-    except jwt.PyJWTError:
-        raise HTTPException(status_code=401, detail="Token inválido ou expirado.")
-
-    cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT g.id, g.cadeira_id AS cadeiraId, g.nome, g.tema FROM grupos g JOIN cadeiras c ON g.cadeira_id = c.id WHERE c.turma_id = %s", (payload.get("turma_id"),))
-    return cursor.fetchall()
-
-
-@app.post("/api/v1/sync/grupos")
-def sync_grupos(
-        grupos_locais: List[GrupoSyncSchema],
-        credentials: HTTPAuthorizationCredentials = Depends(security),
-        db=Depends(get_db)
-):
-    try:
-        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
-    except jwt.PyJWTError:
-        raise HTTPException(status_code=401, detail="Token inválido ou expirado.")
-
-    cursor = db.cursor(dictionary=True)
-
-    for g in grupos_locais:
-        cursor.execute("SELECT id FROM cadeiras WHERE id = %s", (g.cadeiraId,))
-        cad = cursor.fetchone()
-        if not cad:
-            cursor.execute("SELECT id FROM cadeiras LIMIT 1")
-            primeira_cad = cursor.fetchone()
-            if primeira_cad:
-                g.cadeiraId = primeira_cad["id"]
-            else:
-                continue
-
-        cursor.execute("SELECT id FROM grupos WHERE id = %s", (g.id,))
-        existente = cursor.fetchone()
-
-        if not existente:
-            sql = "INSERT INTO grupos (id, cadeira_id, nome, tema) VALUES (%s, %s, %s, %s)"
-            cursor.execute(sql, (g.id, g.cadeiraId, g.nome, g.tema))
-
-    db.commit()
-    return {"status": "success", "message": "Grupos sincronizados com sucesso."}
