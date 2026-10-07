@@ -8,12 +8,19 @@ import com.transnacala.lory.data.local.AppDatabase;
 import com.transnacala.lory.data.local.dao.GrupoDao;
 import com.transnacala.lory.data.local.entity.GrupoEntity;
 import com.transnacala.lory.data.local.model.GrupoComCadeira;
+import com.transnacala.lory.data.remote.ApiClient;
+import com.transnacala.lory.data.remote.model.GroupMemberDto;
+import com.transnacala.lory.data.remote.model.GroupMembersRequest;
 import com.transnacala.lory.sync.SyncManager;
 import com.transnacala.lory.utils.Constants;
 
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Executors;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class GrupoRepository {
 
@@ -42,5 +49,16 @@ public class GrupoRepository {
             grupoDao.insert(entity);
             SyncManager.enqueueSync(context);
         });
+    }
+
+    public void getMembros(String grupoId, Callback<List<GroupMemberDto>> callback) {
+        ApiClient.getApiService(context).getMembrosGrupo(grupoId).enqueue(callback);
+    }
+
+    public void atualizarMembros(String grupoId, List<String> estudanteIds,
+                                 Callback<java.util.Map<String, Object>> callback) {
+        ApiClient.getApiService(context)
+                .atualizarMembrosGrupo(grupoId, new GroupMembersRequest(estudanteIds))
+                .enqueue(callback);
     }
 }

@@ -16,7 +16,16 @@ import java.util.List;
 
 public class GrupoAdapter extends RecyclerView.Adapter<GrupoAdapter.GrupoViewHolder> {
 
+    public interface OnGrupoClickListener {
+        void onGrupoClick(GrupoComCadeira grupo);
+    }
+
     private final List<GrupoComCadeira> grupos = new ArrayList<>();
+    private final OnGrupoClickListener listener;
+
+    public GrupoAdapter(OnGrupoClickListener listener) {
+        this.listener = listener;
+    }
 
     public void setGrupos(List<GrupoComCadeira> novosGrupos) {
         grupos.clear();
@@ -36,7 +45,9 @@ public class GrupoAdapter extends RecyclerView.Adapter<GrupoAdapter.GrupoViewHol
 
     @Override
     public void onBindViewHolder(@NonNull GrupoViewHolder holder, int position) {
-        holder.bind(grupos.get(position));
+        GrupoComCadeira grupo = grupos.get(position);
+        holder.bind(grupo);
+        holder.itemView.setOnClickListener(v -> listener.onGrupoClick(grupo));
     }
 
     @Override

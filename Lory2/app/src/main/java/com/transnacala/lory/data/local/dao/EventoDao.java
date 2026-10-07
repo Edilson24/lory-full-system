@@ -15,11 +15,16 @@ import java.util.List;
 @Dao
 public interface EventoDao {
 
-    @Query("SELECT * FROM eventos ORDER BY updatedAt DESC")
+    @Query("SELECT * FROM eventos WHERE syncStatus != 'PENDING_DELETE' " +
+            "ORDER BY CASE WHEN estado = 'CONCLUIDO' THEN 1 ELSE 0 END, " +
+            "datetime(replace(dataEvento, 'T', ' ')) ASC")
     LiveData<List<EventoEntity>> getEventosLiveData();
 
-    @Query("SELECT * FROM eventos WHERE syncStatus != 'SYNCED'")
+    @Query("SELECT * FROM eventos WHERE syncStatus != 'SYNCED' AND syncStatus != 'PENDING_DELETE'")
     List<EventoEntity> getEventosPendentes();
+
+    @Query("SELECT * FROM eventos WHERE syncStatus = 'PENDING_DELETE'")
+    List<EventoEntity> getEventosPendentesDelete();
 
     @Query("SELECT * FROM eventos WHERE id = :id LIMIT 1")
     EventoEntity getById(String id);
@@ -30,7 +35,10 @@ public interface EventoDao {
     @Query("DELETE FROM eventos WHERE syncStatus = 'SYNCED' AND id NOT IN (:serverIds)")
     void deleteSyncedExcept(List<String> serverIds);
 
-    @Query("SELECT COUNT(*) FROM eventos")
+    @Query("DELETE FROM eventos WHERE id = :id")
+    void deleteById(String id);
+
+    @Query("SELECT COUNT(*) FROM eventos WHERE syncStatus != 'PENDING_DELETE'")
     LiveData<Integer> getEventosCountLiveData();
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -41,13 +49,14 @@ public interface EventoDao {
 
     @Transaction
     default void reconcileWithServer(List<EventoEntity> serverEventos, List<String> acknowledgedIds) {
-        if (serverEventos == null || serverEventos.isEmpty()) {
-            return; // Do not delete local data if server returns empty
-        }
-
         long now = System.currentTimeMillis();
+        List<String> serverIds = new java.util.ArrayList<>();
         for (EventoEntity eventoServidor : serverEventos) {
+            serverIds.add(eventoServidor.id);
             EventoEntity local = getById(eventoServidor.id);
+            if (local != null && "PENDING_DELETE".equals(local.syncStatus)) {
+                continue;
+            }
             boolean isPending = local != null && !"SYNCED".equals(local.syncStatus);
             if (isPending && (acknowledgedIds == null || !acknowledgedIds.contains(eventoServidor.id))) {
                 continue;
@@ -57,6 +66,11 @@ public interface EventoDao {
                 eventoServidor.updatedAt = now;
             }
             insert(eventoServidor);
+        }
+        if (serverIds.isEmpty()) {
+            deleteSynced();
+        } else {
+            deleteSyncedExcept(serverIds);
         }
     }
 }

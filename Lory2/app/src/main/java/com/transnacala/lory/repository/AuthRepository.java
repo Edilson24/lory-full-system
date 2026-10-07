@@ -9,7 +9,11 @@ import com.transnacala.lory.data.remote.ApiClient;
 import com.transnacala.lory.data.remote.ApiService;
 import com.transnacala.lory.data.remote.model.LoginRequest;
 import com.transnacala.lory.data.remote.model.LoginResponse;
+import com.transnacala.lory.data.remote.model.PasswordRecoveryRequest;
+import com.transnacala.lory.data.remote.model.PasswordRecoveryResetRequest;
+import com.transnacala.lory.data.remote.model.PasswordRecoveryVerifyRequest;
 import com.transnacala.lory.data.remote.model.RegisterRequest;
+import com.transnacala.lory.data.remote.model.ResetTokenResponse;
 import com.transnacala.lory.data.remote.model.UserDto;
 import com.transnacala.lory.utils.SessionManager;
 
@@ -31,80 +35,125 @@ public class AuthRepository {
         void onError(String errorMessage);
     }
 
+    public interface RecoveryVerifyCallback {
+        void onSuccess(String resetToken);
+        void onError(String errorMessage);
+    }
+
     public AuthRepository(Context context) {
-        this.apiService = ApiClient.getApiService(context);
-        this.sessionManager = new SessionManager(context);
-        this.db = AppDatabase.getInstance(context);
+        apiService = ApiClient.getApiService(context);
+        sessionManager = new SessionManager(context);
+        db = AppDatabase.getInstance(context);
     }
 
     public void login(String email, String senha, AuthCallback callback) {
-        LoginRequest request = new LoginRequest(email, senha);
-        apiService.login(request).enqueue(new Callback<LoginResponse>() {
+        apiService.login(new LoginRequest(email, senha)).enqueue(new Callback<LoginResponse>() {
             @Override
             public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     LoginResponse body = response.body();
                     UserDto user = body.user;
-
-                    if (user != null) {
-                        // Save session
-                        sessionManager.saveSession(
-                                body.accessToken,
-                                user.id,
-                                user.nome,
-                                user.email,
-                                user.papel,
-                                user.turmaId
-                        );
-
-                        // Save user in Room DB
-                        Executors.newSingleThreadExecutor().execute(() -> {
-                            UtilizadorEntity entity = new UtilizadorEntity(
-                                    user.id,
-                                    user.turmaId,
-                                    user.nome,
-                                    user.email,
-                                    user.papel,
-                                    "APROVADO"
-                            );
-                            db.utilizadorDao().insert(entity);
-                        });
-
-                        callback.onSuccess("Login efetuado com sucesso!");
-                    } else {
+                    if (user == null) {
                         callback.onError("Dados de utilizador inválidos.");
+                        return;
                     }
+                    sessionManager.saveSession(body.accessToken, user.id, user.nome,
+                            user.email, user.papel, user.turmaId);
+                    Executors.newSingleThreadExecutor().execute(() -> db.utilizadorDao().insert(
+                            new UtilizadorEntity(user.id, user.turmaId, user.nome,
+                                    user.email, user.papel, "APROVADO")));
+                    callback.onSuccess("Login efetuado com sucesso!");
                 } else {
-                    String errorMsg = parseErrorMessage(response);
-                    callback.onError(errorMsg);
+                    callback.onError(parseErrorMessage(response));
                 }
             }
 
             @Override
-            public void onFailure(Call<LoginResponse> call, Throwable t) {
+            public void onFailure(Call<LoginResponse> call, Throwable error) {
                 callback.onError("Falha na conexão com o servidor. Verifique sua internet.");
             }
         });
     }
 
     public void register(String nome, String email, String senha, String turmaId, AuthCallback callback) {
-        RegisterRequest request = new RegisterRequest(nome, email, senha, turmaId, null);
-        apiService.register(request).enqueue(new Callback<Map<String, Object>>() {
-            @Override
-            public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> response) {
-                if (response.isSuccessful()) {
-                    callback.onSuccess("Registo efetuado com sucesso! Aguarde a confirmação do chefe.");
-                } else {
-                    String errorMsg = parseErrorMessage(response);
-                    callback.onError(errorMsg);
-                }
-            }
+        apiService.register(new RegisterRequest(nome, email, senha, turmaId, null))
+                .enqueue(new Callback<Map<String, Object>>() {
+                    @Override
+                    public void onResponse(Call<Map<String, Object>> call,
+                                           Response<Map<String, Object>> response) {
+                        if (response.isSuccessful()) {
+                            callback.onSuccess("Registo efetuado com sucesso. Aguarde a confirmação do chefe.");
+                        } else {
+                            callback.onError(parseErrorMessage(response));
+                        }
+                    }
 
-            @Override
-            public void onFailure(Call<Map<String, Object>> call, Throwable t) {
-                callback.onError("Falha na conexão com o servidor.");
-            }
-        });
+                    @Override
+                    public void onFailure(Call<Map<String, Object>> call, Throwable error) {
+                        callback.onError("Falha na conexão com o servidor.");
+                    }
+                });
+    }
+
+    public void requestPasswordRecovery(String email, AuthCallback callback) {
+        apiService.requestPasswordRecovery(new PasswordRecoveryRequest(email))
+                .enqueue(new Callback<Map<String, Object>>() {
+                    @Override
+                    public void onResponse(Call<Map<String, Object>> call,
+                                           Response<Map<String, Object>> response) {
+                        if (response.isSuccessful()) {
+                            callback.onSuccess("Se a conta existir, será enviado um código para o e-mail informado.");
+                        } else {
+                            callback.onError(parseErrorMessage(response));
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<Map<String, Object>> call, Throwable error) {
+                        callback.onError("Falha na conexão com o servidor.");
+                    }
+                });
+    }
+
+    public void verifyPasswordRecovery(String email, String pin, RecoveryVerifyCallback callback) {
+        apiService.verifyPasswordRecovery(new PasswordRecoveryVerifyRequest(email, pin))
+                .enqueue(new Callback<ResetTokenResponse>() {
+                    @Override
+                    public void onResponse(Call<ResetTokenResponse> call,
+                                           Response<ResetTokenResponse> response) {
+                        if (response.isSuccessful() && response.body() != null
+                                && response.body().resetToken != null) {
+                            callback.onSuccess(response.body().resetToken);
+                        } else {
+                            callback.onError(parseErrorMessage(response));
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<ResetTokenResponse> call, Throwable error) {
+                        callback.onError("Falha na conexão com o servidor.");
+                    }
+                });
+    }
+
+    public void resetPassword(String email, String resetToken, String newPassword, AuthCallback callback) {
+        apiService.resetPassword(new PasswordRecoveryResetRequest(email, resetToken, newPassword))
+                .enqueue(new Callback<Map<String, Object>>() {
+                    @Override
+                    public void onResponse(Call<Map<String, Object>> call,
+                                           Response<Map<String, Object>> response) {
+                        if (response.isSuccessful()) {
+                            callback.onSuccess("Senha redefinida. Já pode iniciar sessão.");
+                        } else {
+                            callback.onError(parseErrorMessage(response));
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<Map<String, Object>> call, Throwable error) {
+                        callback.onError("Falha na conexão com o servidor.");
+                    }
+                });
     }
 
     private String parseErrorMessage(Response<?> response) {
@@ -116,8 +165,8 @@ public class AuthRepository {
                     return map.get("detail").toString();
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception exception) {
+            return "Erro no servidor (" + response.code() + ").";
         }
         if (response.code() == 400) return "Credenciais inválidas.";
         if (response.code() == 403) return "Acesso negado ou conta pendente de aprovação.";

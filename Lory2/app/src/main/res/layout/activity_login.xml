@@ -48,7 +48,8 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="24dp"
             app:cardCornerRadius="20dp"
-            app:cardElevation="0dp">
+            app:cardElevation="8dp"
+            app:cardUseCompatPadding="true">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -132,6 +133,18 @@
                     android:textSize="15sp"
                     android:textStyle="bold"
                     app:cornerRadius="14dp" />
+
+                <TextView
+                    android:id="@+id/tv_forgot_password"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="10dp"
+                    android:padding="8dp"
+                    android:text="Esqueceu a palavra-passe?"
+                    android:textColor="@color/primary_blue"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
 
             </LinearLayout>
         </androidx.cardview.widget.CardView>

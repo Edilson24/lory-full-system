@@ -23,4 +23,12 @@ public class EventsViewModel extends AndroidViewModel {
     public LiveData<List<EventoEntity>> getEventosLiveData() {
         return eventoRepository.getEventosLiveData();
     }
+
+    public void updateEstado(String eventoId, String estado) {
+        eventoRepository.updateEstado(eventoId, estado);
+    }
+
+    public void deleteEvento(String eventoId) {
+        eventoRepository.deleteEvento(eventoId);
+    }
 }

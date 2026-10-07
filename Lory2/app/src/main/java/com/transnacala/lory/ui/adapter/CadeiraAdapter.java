@@ -68,7 +68,8 @@ public class CadeiraAdapter extends RecyclerView.Adapter<CadeiraAdapter.CadeiraV
 
         public void bind(CadeiraEntity cadeira) {
             binding.tvCadeiraNome.setText(cadeira.nome);
-            binding.tvCadeiraCategoria.setText(cadeira.categoria != null && !cadeira.categoria.isEmpty() ? cadeira.categoria : "1º Semestre 2026");
+            binding.tvCadeiraDocente.setText(cadeira.docenteNome != null && !cadeira.docenteNome.isEmpty()
+                    ? cadeira.docenteNome : "Docente não informado");
             binding.tvCadeiraStatus.setText(cadeira.concluida ?
                     itemView.getContext().getString(R.string.project_completed) :
                     itemView.getContext().getString(R.string.project_in_progress));

@@ -47,12 +47,10 @@ public interface CadeiraDao {
 
     @Transaction
     default void reconcileWithServer(List<CadeiraEntity> serverCadeiras, List<String> acknowledgedIds) {
-        if (serverCadeiras == null || serverCadeiras.isEmpty()) {
-            return; // Do not delete local data if server returns empty
-        }
-
         long now = System.currentTimeMillis();
+        List<String> serverIds = new java.util.ArrayList<>();
         for (CadeiraEntity cadeiraServidor : serverCadeiras) {
+            serverIds.add(cadeiraServidor.id);
             CadeiraEntity local = getById(cadeiraServidor.id);
             boolean isPending = local != null && !"SYNCED".equals(local.syncStatus);
             if (isPending && (acknowledgedIds == null || !acknowledgedIds.contains(cadeiraServidor.id))) {
@@ -63,6 +61,11 @@ public interface CadeiraDao {
                 cadeiraServidor.updatedAt = now;
             }
             insert(cadeiraServidor);
+        }
+        if (serverIds.isEmpty()) {
+            deleteSynced();
+        } else {
+            deleteSyncedExcept(serverIds);
         }
     }
 }

@@ -25,6 +25,9 @@ public class CadeiraEntity {
     @SerializedName("nome")
     public String nome;
 
+    @SerializedName("docenteNome")
+    public String docenteNome;
+
     @SerializedName("categoria")
     public String categoria;
 
@@ -45,6 +48,7 @@ public class CadeiraEntity {
         this.semestreId = semestreId;
         this.docenteId = docenteId;
         this.nome = nome;
+        this.docenteNome = null;
         this.categoria = categoria;
         this.progresso = progresso;
         this.concluida = concluida;

@@ -57,4 +57,8 @@ public class ProfileViewModel extends AndroidViewModel {
     public SessionManager getSessionManager() {
         return sessionManager;
     }
+
+    public GrupoRepository getGrupoRepository() {
+        return grupoRepository;
+    }
 }

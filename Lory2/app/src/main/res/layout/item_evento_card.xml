@@ -5,7 +5,8 @@
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
     app:cardCornerRadius="16dp"
-    app:cardElevation="0dp">
+    app:cardElevation="6dp"
+    app:cardUseCompatPadding="true">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -54,5 +55,27 @@
             android:layout_marginTop="2dp"
             android:textColor="@color/text_secondary"
             android:textSize="12sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btn_evento_estado"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:text="Concluir" />
+
+            <Button
+                android:id="@+id/btn_evento_eliminar"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Eliminar" />
+        </LinearLayout>
     </LinearLayout>
 </androidx.cardview.widget.CardView>

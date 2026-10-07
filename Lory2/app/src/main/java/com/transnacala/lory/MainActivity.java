@@ -7,6 +7,7 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -24,6 +25,7 @@ import androidx.lifecycle.Observer;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.transnacala.lory.data.local.AppDatabase;
 import com.transnacala.lory.data.local.entity.CadeiraEntity;
+import com.transnacala.lory.data.local.model.QuestaoEnqueteDraft;
 import com.transnacala.lory.databinding.ActivityMainBinding;
 import com.transnacala.lory.repository.EnqueteRepository;
 import com.transnacala.lory.repository.EventoRepository;
@@ -38,6 +40,10 @@ import com.transnacala.lory.utils.SessionManager;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.format.ResolverStyle;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -215,41 +221,177 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showAddPollDialog() {
+        if (!sessionManager.isChefe()) {
+            Toast.makeText(this, "Apenas o Chefe de Turma pode criar enquetes.", Toast.LENGTH_LONG).show();
+            return;
+        }
         BottomSheetDialog dialog = new BottomSheetDialog(this);
         View view = getLayoutInflater().inflate(R.layout.dialog_add_poll, binding.getRoot(), false);
         dialog.setContentView(view);
 
         EditText etQuestion = view.findViewById(R.id.et_poll_question);
         EditText etDeadline = view.findViewById(R.id.et_poll_deadline);
+        LinearLayout questionsContainer = view.findViewById(R.id.poll_questions_container);
+        List<PollQuestionInput> questions = new ArrayList<>();
+        addPollQuestionInput(questionsContainer, questions);
+        view.findViewById(R.id.btn_add_poll_question).setOnClickListener(v ->
+                addPollQuestionInput(questionsContainer, questions));
 
         view.findViewById(R.id.btn_cancel_poll).setOnClickListener(v -> dialog.dismiss());
 
         view.findViewById(R.id.btn_save_poll).setOnClickListener(v -> {
             String question = etQuestion.getText().toString().trim();
             String deadline = etDeadline.getText().toString().trim();
+            List<QuestaoEnqueteDraft> pollQuestions = new ArrayList<>();
 
             if (question.isEmpty()) {
                 etQuestion.setError("Informe a pergunta");
                 return;
             }
+            if (question.length() > 255) {
+                etQuestion.setError("A pergunta deve ter no máximo 255 caracteres");
+                return;
+            }
+
+            for (PollQuestionInput pollQuestion : questions) {
+                String prompt = pollQuestion.question.getText().toString().trim();
+                if (prompt.isEmpty() || prompt.length() > 255) {
+                    pollQuestion.question.setError(prompt.isEmpty()
+                            ? "Informe o texto da questão" : "Máximo de 255 caracteres");
+                    return;
+                }
+                List<String> options = new ArrayList<>();
+                for (EditText input : pollQuestion.options) {
+                    String option = input.getText().toString().trim();
+                    if (!option.isEmpty()) {
+                        if (option.length() > 150) {
+                            input.setError("Máximo de 150 caracteres");
+                            return;
+                        }
+                        options.add(option);
+                    }
+                }
+                if (options.size() < 2) {
+                    Toast.makeText(MainActivity.this,
+                            "Cada questão precisa de pelo menos duas opções.", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                pollQuestions.add(new QuestaoEnqueteDraft(prompt, options));
+            }
+            if (pollQuestions.isEmpty()) {
+                Toast.makeText(MainActivity.this, "Adicione pelo menos uma questão.", Toast.LENGTH_LONG).show();
+                return;
+            }
 
             if (deadline.isEmpty()) {
-                deadline = "2026-11-20 23:59:59";
-            } else if (!deadline.contains(" ")) {
+                etDeadline.setError("Informe o prazo");
+                return;
+            }
+            if (!deadline.contains(" ")) {
                 deadline += " 23:59:59";
+            }
+            try {
+                LocalDateTime prazoEnquete = LocalDateTime.parse(
+                        deadline, DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss")
+                                .withResolverStyle(ResolverStyle.STRICT));
+                if (!prazoEnquete.isAfter(LocalDateTime.now())) {
+                    etDeadline.setError("O prazo deve estar no futuro");
+                    return;
+                }
+            } catch (DateTimeParseException exception) {
+                etDeadline.setError("Use AAAA-MM-DD ou AAAA-MM-DD HH:MM:SS");
+                return;
             }
 
             String turmaId = sessionManager.getTurmaId();
             if (turmaId == null || turmaId.isEmpty()) {
-                turmaId = "turma-inf-2026";
+                Toast.makeText(MainActivity.this, "A sua conta não está associada a uma turma.", Toast.LENGTH_LONG).show();
+                return;
             }
 
-            enqueteRepository.insertEnquete(turmaId, question, deadline, sessionManager.getUserName());
+            enqueteRepository.insertEnquete(
+                    turmaId, question, deadline, sessionManager.getUserName(), pollQuestions);
             dialog.dismiss();
             Toast.makeText(MainActivity.this, "Enquete criada com sucesso!", Toast.LENGTH_SHORT).show();
         });
 
         dialog.show();
+    }
+
+    private static class PollQuestionInput {
+        final EditText question;
+        final List<EditText> options = new ArrayList<>();
+        final LinearLayout optionsContainer;
+
+        PollQuestionInput(EditText question, LinearLayout optionsContainer) {
+            this.question = question;
+            this.optionsContainer = optionsContainer;
+        }
+    }
+
+    private void addPollQuestionInput(LinearLayout container, List<PollQuestionInput> questions) {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        float density = getResources().getDisplayMetrics().density;
+        card.setPadding((int) (12 * density), (int) (12 * density),
+                (int) (12 * density), (int) (12 * density));
+        card.setBackgroundResource(R.drawable.bg_card_light);
+
+        TextView label = new TextView(this);
+        label.setText("Questão " + (questions.size() + 1));
+        label.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
+        label.setTypeface(null, Typeface.BOLD);
+        card.addView(label);
+
+        EditText question = createPollInput("Texto da questão");
+        LinearLayout.LayoutParams questionParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, (int) (48 * density));
+        questionParams.topMargin = (int) (8 * density);
+        card.addView(question, questionParams);
+
+        LinearLayout optionsContainer = new LinearLayout(this);
+        optionsContainer.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams optionsParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        optionsParams.topMargin = (int) (8 * density);
+        card.addView(optionsContainer, optionsParams);
+
+        PollQuestionInput input = new PollQuestionInput(question, optionsContainer);
+        addPollOptionInput(input);
+        addPollOptionInput(input);
+        TextView addOption = new TextView(this);
+        addOption.setText("＋ Adicionar opção");
+        addOption.setTextColor(ContextCompat.getColor(this, R.color.primary_blue));
+        addOption.setPadding(0, (int) (8 * density), 0, (int) (4 * density));
+        addOption.setOnClickListener(v -> addPollOptionInput(input));
+        card.addView(addOption);
+
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        cardParams.bottomMargin = (int) (12 * density);
+        container.addView(card, cardParams);
+        questions.add(input);
+    }
+
+    private EditText createPollInput(String hint) {
+        EditText input = new EditText(this);
+        input.setSingleLine(true);
+        input.setHint(hint);
+        input.setInputType(android.text.InputType.TYPE_CLASS_TEXT);
+        input.setPadding(16, 0, 16, 0);
+        input.setBackgroundResource(R.drawable.bg_search_bar);
+        return input;
+    }
+
+    private void addPollOptionInput(PollQuestionInput question) {
+        int optionNumber = question.options.size() + 1;
+        EditText optionInput = createPollInput("Opção " + optionNumber);
+        float density = getResources().getDisplayMetrics().density;
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, (int) (46 * density));
+        params.bottomMargin = (int) (6 * density);
+        question.optionsContainer.addView(optionInput, params);
+        question.options.add(optionInput);
     }
 
     private void showAddGroupDialog() {

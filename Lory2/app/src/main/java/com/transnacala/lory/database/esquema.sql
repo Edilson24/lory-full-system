@@ -100,10 +100,27 @@ CREATE TABLE grupos (
 -- 9. Membros dos Grupos
 CREATE TABLE grupo_membros (
     grupo_id VARCHAR(36) NOT NULL,
+    cadeira_id VARCHAR(36) NOT NULL,
     estudante_id VARCHAR(36) NOT NULL,
     PRIMARY KEY (grupo_id, estudante_id),
+    UNIQUE (cadeira_id, estudante_id),
     FOREIGN KEY (grupo_id) REFERENCES grupos(id) ON DELETE CASCADE,
+    FOREIGN KEY (cadeira_id) REFERENCES cadeiras(id) ON DELETE CASCADE,
     FOREIGN KEY (estudante_id) REFERENCES utilizadores(id) ON DELETE CASCADE
+);
+
+CREATE TABLE password_reset_tokens (
+    id VARCHAR(36) PRIMARY KEY,
+    user_id VARCHAR(36) NOT NULL,
+    pin_hash CHAR(64) NOT NULL,
+    reset_token_hash CHAR(64) NULL,
+    expires_at DATETIME NOT NULL,
+    attempts TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    verified_at DATETIME NULL,
+    used_at DATETIME NULL,
+    created_at DATETIME NOT NULL,
+    INDEX idx_password_reset_user_created (user_id, created_at),
+    FOREIGN KEY (user_id) REFERENCES utilizadores(id) ON DELETE CASCADE
 );
 
 -- 10. Eventos (Testes, Apresentações)
@@ -179,20 +196,32 @@ CREATE TABLE enquetes (
     FOREIGN KEY (criada_por) REFERENCES utilizadores(id) ON DELETE CASCADE
 );
 
+CREATE TABLE questoes_enquete (
+    id VARCHAR(36) PRIMARY KEY,
+    enquete_id VARCHAR(36) NOT NULL,
+    pergunta VARCHAR(255) NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (enquete_id) REFERENCES enquetes(id) ON DELETE CASCADE
+);
+
 CREATE TABLE opcoes_enquete (
     id VARCHAR(36) PRIMARY KEY,
     enquete_id VARCHAR(36) NOT NULL,
+    questao_id VARCHAR(36) NOT NULL,
     texto VARCHAR(150) NOT NULL,
-    FOREIGN KEY (enquete_id) REFERENCES enquetes(id) ON DELETE CASCADE
+    FOREIGN KEY (enquete_id) REFERENCES enquetes(id) ON DELETE CASCADE,
+    FOREIGN KEY (questao_id) REFERENCES questoes_enquete(id) ON DELETE CASCADE
 );
 
 CREATE TABLE votos (
     enquete_id VARCHAR(36) NOT NULL,
+    questao_id VARCHAR(36) NOT NULL,
     estudante_id VARCHAR(36) NOT NULL,
     opcao_id VARCHAR(36) NOT NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (enquete_id, estudante_id),
+    PRIMARY KEY (questao_id, estudante_id),
     FOREIGN KEY (enquete_id) REFERENCES enquetes(id) ON DELETE CASCADE,
+    FOREIGN KEY (questao_id) REFERENCES questoes_enquete(id) ON DELETE CASCADE,
     FOREIGN KEY (estudante_id) REFERENCES utilizadores(id) ON DELETE CASCADE,
     FOREIGN KEY (opcao_id) REFERENCES opcoes_enquete(id) ON DELETE CASCADE
 );

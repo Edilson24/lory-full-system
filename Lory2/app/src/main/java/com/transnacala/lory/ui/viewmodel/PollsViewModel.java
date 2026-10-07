@@ -6,7 +6,8 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 
-import com.transnacala.lory.data.local.entity.EnqueteEntity;
+import com.transnacala.lory.data.local.entity.VotoLocalEntity;
+import com.transnacala.lory.data.local.model.EnqueteComQuestoes;
 import com.transnacala.lory.repository.EnqueteRepository;
 
 import java.util.List;
@@ -20,11 +21,15 @@ public class PollsViewModel extends AndroidViewModel {
         enqueteRepository = new EnqueteRepository(application);
     }
 
-    public LiveData<List<EnqueteEntity>> getEnquetesLiveData() {
+    public LiveData<List<EnqueteComQuestoes>> getEnquetesLiveData() {
         return enqueteRepository.getEnquetesLiveData();
     }
 
-    public void insertEnquete(String turmaId, String pergunta, String prazo, String criadaPor) {
-        enqueteRepository.insertEnquete(turmaId, pergunta, prazo, criadaPor);
+    public LiveData<List<VotoLocalEntity>> getVotosLiveData(String userId) {
+        return enqueteRepository.getVotosLiveData(userId);
+    }
+
+    public void votar(String questaoId, String opcaoId, String userId) {
+        enqueteRepository.votar(questaoId, opcaoId, userId);
     }
 }

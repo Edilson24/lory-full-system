@@ -107,8 +107,12 @@ Na base de dados Room do dispositivo móvel, todas as entidades mantêm réplica
 
 Em todas as tabelas locais do Room, adicionar:
 
-* `sync_status`: String (`"PENDING_INSERT"`, `"PENDING_UPDATE"`, `"SYNCED"`).
+* `sync_status`: String (`"PENDING_INSERT"`, `"PENDING_UPDATE"`, `"PENDING_DELETE"`, `"SYNCED"`). Exclusões offline devem manter uma tombstone até a API confirmar a remoção.
 * `updated_at`: Long (Timestamp Unix em milissegundos).
+
+As cadeiras são reconciliadas a partir de cada resposta bem-sucedida do servidor: registros locais já sincronizados que não aparecem no snapshot são removidos, enquanto alterações locais pendentes são preservadas. Os eventos são ordenados por prazo e suas exclusões ficam pendentes no Room até serem confirmadas pela API.
+
+Enquetes possuem opções persistidas localmente e contagens agregadas no servidor. Cada utilizador mantém uma única opção por enquete; uma nova escolha substitui o voto anterior. Votos offline ficam em `votos_locais` com o instante da escolha e são enviados quando houver conexão; a tabela MySQL `votos` continua sendo a fonte da contagem oficial.
 
 ### 4.2 Exemplo de Entidade Room em Java (`EventoEntity.java`)
 

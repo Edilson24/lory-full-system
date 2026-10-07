@@ -16,7 +16,19 @@ import java.util.List;
 
 public class EventoAdapter extends RecyclerView.Adapter<EventoAdapter.EventoViewHolder> {
 
+    public interface OnEventoActionListener {
+        void onEstadoChange(EventoEntity evento);
+        void onDelete(EventoEntity evento);
+    }
+
     private final List<EventoEntity> eventos = new ArrayList<>();
+    private final OnEventoActionListener listener;
+    private final boolean allowManagement;
+
+    public EventoAdapter(OnEventoActionListener listener, boolean allowManagement) {
+        this.listener = listener;
+        this.allowManagement = allowManagement;
+    }
 
     public void setEventos(List<EventoEntity> novosEventos) {
         eventos.clear();
@@ -36,7 +48,7 @@ public class EventoAdapter extends RecyclerView.Adapter<EventoAdapter.EventoView
 
     @Override
     public void onBindViewHolder(@NonNull EventoViewHolder holder, int position) {
-        holder.bind(eventos.get(position));
+        holder.bind(eventos.get(position), listener, allowManagement);
     }
 
     @Override
@@ -52,7 +64,7 @@ public class EventoAdapter extends RecyclerView.Adapter<EventoAdapter.EventoView
             this.binding = binding;
         }
 
-        void bind(EventoEntity evento) {
+        void bind(EventoEntity evento, OnEventoActionListener listener, boolean allowManagement) {
             binding.tvEventoTitulo.setText(evento.titulo);
             binding.tvEventoTipo.setText(getTypeLabel(evento.tipo));
             binding.tvEventoData.setText(evento.dataEvento == null ? "" : evento.dataEvento.replace('T', ' '));
@@ -60,6 +72,11 @@ public class EventoAdapter extends RecyclerView.Adapter<EventoAdapter.EventoView
                     ? R.string.event_state_completed : R.string.event_state_pending);
             binding.tvEventoSync.setText(isPending(evento.syncStatus)
                     ? R.string.event_sync_pending : R.string.event_sync_complete);
+            binding.btnEventoEstado.setVisibility(allowManagement ? android.view.View.VISIBLE : android.view.View.GONE);
+            binding.btnEventoEliminar.setVisibility(allowManagement ? android.view.View.VISIBLE : android.view.View.GONE);
+            binding.btnEventoEstado.setText("CONCLUIDO".equalsIgnoreCase(evento.estado) ? "Reabrir" : "Concluir");
+            binding.btnEventoEstado.setOnClickListener(v -> listener.onEstadoChange(evento));
+            binding.btnEventoEliminar.setOnClickListener(v -> listener.onDelete(evento));
         }
 
         private int getTypeLabel(String type) {

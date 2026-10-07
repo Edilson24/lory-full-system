@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.transnacala.lory.databinding.FragmentPollsBinding;
 import com.transnacala.lory.ui.adapter.EnqueteAdapter;
 import com.transnacala.lory.ui.viewmodel.PollsViewModel;
+import com.transnacala.lory.utils.SessionManager;
 
 public class PollsFragment extends Fragment {
 
@@ -31,13 +32,13 @@ public class PollsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        adapter = new EnqueteAdapter();
+        PollsViewModel viewModel = new ViewModelProvider(this).get(PollsViewModel.class);
+        SessionManager session = new SessionManager(requireContext());
+        String userId = session.getUserId();
+        adapter = new EnqueteAdapter((questaoId, opcaoId) -> viewModel.votar(questaoId, opcaoId, userId));
         binding.rvEnquetes.setLayoutManager(new LinearLayoutManager(requireContext()));
         binding.rvEnquetes.setAdapter(adapter);
 
-        PollsViewModel viewModel = new ViewModelProvider(this).get(PollsViewModel.class);
-
-        // Observe Enquetes from Room
         viewModel.getEnquetesLiveData().observe(getViewLifecycleOwner(), enquetes -> {
             if (enquetes != null && !enquetes.isEmpty()) {
                 binding.rvEnquetes.setVisibility(View.VISIBLE);
@@ -48,6 +49,7 @@ public class PollsFragment extends Fragment {
                 binding.tvEmptyStatePolls.setVisibility(View.VISIBLE);
             }
         });
+        viewModel.getVotosLiveData(userId).observe(getViewLifecycleOwner(), adapter::setVotos);
     }
 
     @Override

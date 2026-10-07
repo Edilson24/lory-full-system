@@ -15,5 +15,6 @@ public class Constants {
     // Sync Statuses
     public static final String SYNC_STATUS_PENDING_INSERT = "PENDING_INSERT";
     public static final String SYNC_STATUS_PENDING_UPDATE = "PENDING_UPDATE";
+    public static final String SYNC_STATUS_PENDING_DELETE = "PENDING_DELETE";
     public static final String SYNC_STATUS_SYNCED = "SYNCED";
 }
