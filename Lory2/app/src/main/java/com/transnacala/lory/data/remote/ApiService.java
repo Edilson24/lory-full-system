@@ -15,6 +15,7 @@ import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
+import retrofit2.http.Query;
 
 public interface ApiService {
 
@@ -50,4 +51,10 @@ public interface ApiService {
 
     @GET("api/v1/grupos")
     Call<List<GrupoEntity>> getGruposServidor();
+
+    @GET("api/v1/grupos")
+    Call<List<GrupoEntity>> getGruposDaCadeira(@Query("cadeira_id") String cadeiraId);
+
+    @GET("api/v1/cadeiras")
+    Call<List<CadeiraEntity>> getCadeiras();
 }

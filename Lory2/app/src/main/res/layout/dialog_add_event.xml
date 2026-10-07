@@ -69,10 +69,20 @@
         android:id="@+id/sp_event_cadeira"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:layout_marginBottom="14dp"
+        android:layout_marginBottom="4dp"
         android:background="@drawable/bg_search_bar"
         android:paddingStart="12dp"
         android:paddingEnd="12dp" />
+
+    <TextView
+        android:id="@+id/tv_event_cadeira_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="14dp"
+        android:text="@string/empty_cadeiras"
+        android:textColor="@color/text_secondary"
+        android:textSize="12sp"
+        android:visibility="gone" />
 
     <!-- Data do Evento -->
     <TextView

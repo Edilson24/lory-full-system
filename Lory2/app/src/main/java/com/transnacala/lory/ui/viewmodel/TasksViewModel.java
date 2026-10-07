@@ -10,6 +10,7 @@ import com.transnacala.lory.data.local.entity.CadeiraEntity;
 import com.transnacala.lory.data.local.entity.EventoEntity;
 import com.transnacala.lory.repository.CadeiraRepository;
 import com.transnacala.lory.repository.EventoRepository;
+import com.transnacala.lory.sync.SyncManager;
 
 import java.util.List;
 
@@ -30,5 +31,14 @@ public class TasksViewModel extends AndroidViewModel {
 
     public LiveData<List<CadeiraEntity>> getCadeirasLiveData() {
         return cadeiraRepository.getCadeirasLiveData();
+    }
+
+    // Método para disparar a sincronização a partir da UI
+    public void syncCadeiras() {
+        // Dispara o agendamento no WorkManager
+        //SyncManager.getInstance(getApplication()).enqueueOneTimeSync();
+
+        // OU se o seu CadeiraRepository tiver um método próprio:
+        // cadeiraRepository.syncCadeiras();
     }
 }

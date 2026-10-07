@@ -3,8 +3,12 @@ package com.transnacala.lory.data.remote;
 import android.content.Context;
 import android.content.Intent;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.transnacala.lory.ui.auth.LoginActivity;
+import com.transnacala.lory.utils.BooleanTypeAdapter;
 import com.transnacala.lory.utils.Constants;
+import com.transnacala.lory.utils.LongTypeAdapter;
 import com.transnacala.lory.utils.SessionManager;
 
 import okhttp3.OkHttpClient;
@@ -47,10 +51,18 @@ public class ApiClient {
                     })
                     .build();
 
+            Gson customGson = new GsonBuilder()
+                    .registerTypeAdapter(long.class, new LongTypeAdapter())
+                    .registerTypeAdapter(Long.class, new LongTypeAdapter())
+                    .registerTypeAdapter(boolean.class, new BooleanTypeAdapter())
+                    .registerTypeAdapter(Boolean.class, new BooleanTypeAdapter())
+                    .setLenient()
+                    .create();
+
             retrofit = new Retrofit.Builder()
                     .baseUrl(Constants.BASE_URL)
                     .client(okHttpClient)
-                    .addConverterFactory(GsonConverterFactory.create())
+                    .addConverterFactory(GsonConverterFactory.create(customGson))
                     .build();
         }
         return retrofit;

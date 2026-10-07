@@ -4,6 +4,7 @@
     <!-- Navigation Tabs -->
     <string name="nav_home">Início</string>
     <string name="nav_tasks">Cadeiras</string>
+    <string name="nav_events">Eventos</string>
     <string name="nav_polls">Enquetes</string>
     <string name="nav_profile">Perfil</string>
     <string name="btn_add">Adicionar</string>
@@ -38,7 +39,19 @@
 
     <!-- Tasks & Polls -->
     <string name="my_tasks_title">Minhas Cadeiras &amp; Avaliações</string>
+    <string name="tasks_cadeiras_title">Minhas Cadeiras</string>
+    <string name="tasks_eventos_title">Eventos e Avaliações</string>
     <string name="polls_title">Enquetes &amp; Votações da Turma</string>
+    <string name="event_type_test">Teste</string>
+    <string name="event_type_presentation">Apresentação</string>
+    <string name="event_type_other">Outro</string>
+    <string name="event_state_pending">Pendente</string>
+    <string name="event_state_completed">Concluído</string>
+    <string name="event_sync_pending">A aguardar sincronização</string>
+    <string name="event_sync_complete">Sincronizado</string>
+    <string name="event_requires_cadeira">Não há cadeira disponível no dispositivo. Sincronize as cadeiras antes de criar um evento.</string>
+    <string name="group_no_theme">Sem tema definido</string>
+    <string name="group_chair_format">Cadeira: %1$s</string>
     <string name="create_what_title">O que deseja criar?</string>
     <string name="create_event">Novo Evento / Avaliação</string>
     <string name="create_poll">Criar Nova Enquete da Turma</string>

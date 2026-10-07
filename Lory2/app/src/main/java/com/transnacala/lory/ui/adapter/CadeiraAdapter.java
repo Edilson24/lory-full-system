@@ -2,7 +2,6 @@ package com.transnacala.lory.ui.adapter;
 
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -15,7 +14,16 @@ import java.util.List;
 
 public class CadeiraAdapter extends RecyclerView.Adapter<CadeiraAdapter.CadeiraViewHolder> {
 
+    public interface OnCadeiraClickListener {
+        void onCadeiraClick(CadeiraEntity cadeira);
+    }
+
     private final List<CadeiraEntity> cadeiras = new ArrayList<>();
+    private OnCadeiraClickListener listener;
+
+    public void setOnCadeiraClickListener(OnCadeiraClickListener listener) {
+        this.listener = listener;
+    }
 
     public void setCadeiras(List<CadeiraEntity> newCadeiras) {
         this.cadeiras.clear();
@@ -35,7 +43,14 @@ public class CadeiraAdapter extends RecyclerView.Adapter<CadeiraAdapter.CadeiraV
 
     @Override
     public void onBindViewHolder(@NonNull CadeiraViewHolder holder, int position) {
-        holder.bind(cadeiras.get(position));
+        CadeiraEntity cadeira = cadeiras.get(position);
+        holder.bind(cadeira);
+
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onCadeiraClick(cadeira);
+            }
+        });
     }
 
     @Override

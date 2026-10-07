@@ -306,97 +306,23 @@
                     android:textSize="13sp" />
             </RelativeLayout>
 
-            <!-- My Team List Items -->
-
-            <!-- Item 1: Grupo 1 - Lory App -->
-            <RelativeLayout
+            <TextView
+                android:id="@+id/tv_empty_groups"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp">
+                android:gravity="center"
+                android:padding="16dp"
+                android:text="@string/empty_grupos"
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp"
+                android:visibility="gone" />
 
-                <ImageView
-                    android:id="@+id/item1_icon"
-                    android:layout_width="44dp"
-                    android:layout_height="44dp"
-                    android:layout_alignParentStart="true"
-                    android:layout_centerVertical="true"
-                    android:background="@drawable/bg_circle_icon"
-                    android:contentDescription="@string/desc_icon"
-                    android:padding="10dp"
-                    android:src="@drawable/ic_bag"
-                    app:tint="@color/primary_dark_blue" />
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_centerVertical="true"
-                    android:layout_marginStart="14dp"
-                    android:layout_toEndOf="@id/item1_icon"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Grupo 1 - Aplicação Lory"
-                        android:textColor="@color/text_primary"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="@string/project_in_progress"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
-                </LinearLayout>
-
-            </RelativeLayout>
-
-            <!-- Item 2: Food Project -->
-            <RelativeLayout
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_grupos"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp">
-
-                <ImageView
-                    android:id="@+id/item2_icon"
-                    android:layout_width="44dp"
-                    android:layout_height="44dp"
-                    android:layout_alignParentStart="true"
-                    android:layout_centerVertical="true"
-                    android:background="@drawable/bg_circle_icon"
-                    android:contentDescription="@string/desc_icon"
-                    android:padding="10dp"
-                    android:src="@drawable/ic_dashboard"
-                    app:tint="@color/primary_dark_blue" />
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_centerVertical="true"
-                    android:layout_marginStart="14dp"
-                    android:layout_toEndOf="@id/item2_icon"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Grupo 2 - Artigo Científico"
-                        android:textColor="@color/text_primary"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="@string/project_completed"
-                        android:textColor="@color/status_green"
-                        android:textSize="12sp" />
-                </LinearLayout>
-
-            </RelativeLayout>
+                android:nestedScrollingEnabled="false"
+                tools:listitem="@layout/item_grupo_card" />
 
         </LinearLayout>
 

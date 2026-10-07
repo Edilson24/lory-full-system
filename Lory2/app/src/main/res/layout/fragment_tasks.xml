@@ -13,17 +13,15 @@
         android:orientation="vertical"
         android:padding="20dp">
 
-        <!-- Header -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
-            android:text="@string/my_tasks_title"
+            android:text="@string/nav_tasks"
             android:textColor="@color/text_primary"
             android:textSize="22sp"
             android:textStyle="bold" />
 
-        <!-- Empty State -->
         <TextView
             android:id="@+id/tv_empty_state_tasks"
             android:layout_width="match_parent"
@@ -35,13 +33,11 @@
             android:textSize="14sp"
             android:visibility="gone" />
 
-        <!-- Dynamic List of Cadeiras -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_cadeiras"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:nestedScrollingEnabled="false"
             tools:listitem="@layout/item_cadeira_card" />
-
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

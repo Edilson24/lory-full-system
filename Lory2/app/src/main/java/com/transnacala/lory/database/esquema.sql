@@ -57,18 +57,24 @@ CREATE TABLE semestres (
 );
 
 -- 6. Cadeiras
-CREATE TABLE cadeiras (
-    id VARCHAR(36) PRIMARY KEY,
-    turma_id VARCHAR(36) NOT NULL,
-    semestre_id VARCHAR(36) NOT NULL,
-    docente_id VARCHAR(36) NOT NULL,
-    nome VARCHAR(100) NOT NULL,
-    concluida BOOLEAN DEFAULT FALSE,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (turma_id) REFERENCES turmas(id) ON DELETE CASCADE,
-    FOREIGN KEY (semestre_id) REFERENCES semestres(id) ON DELETE CASCADE,
-    FOREIGN KEY (docente_id) REFERENCES docentes(id) ON DELETE CASCADE
-);
+CREATE TABLE `cadeiras` (
+  `id` varchar(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `turma_id` varchar(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `semestre_id` varchar(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `docente_id` varchar(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `nome` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `concluida` tinyint(1) DEFAULT '0',
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `categoria` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT 'Geral',
+  `progresso` int DEFAULT '0',
+  PRIMARY KEY (`id`),
+  KEY `turma_id` (`turma_id`),
+  KEY `semestre_id` (`semestre_id`),
+  KEY `docente_id` (`docente_id`),
+  CONSTRAINT `cadeiras_ibfk_1` FOREIGN KEY (`turma_id`) REFERENCES `turmas` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `cadeiras_ibfk_2` FOREIGN KEY (`semestre_id`) REFERENCES `semestres` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `cadeiras_ibfk_3` FOREIGN KEY (`docente_id`) REFERENCES `docentes` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 
 -- 7. Inscrição de Estudantes nas Cadeiras
 CREATE TABLE inscricoes (
@@ -80,7 +86,7 @@ CREATE TABLE inscricoes (
     FOREIGN KEY (estudante_id) REFERENCES utilizadores(id) ON DELETE CASCADE
 );
 
--- 8. Grupos
+-- 8. Grupos de trabalho: cada grupo pertence a uma cadeira; uma cadeira pode ter vários grupos.
 CREATE TABLE grupos (
     id VARCHAR(36) PRIMARY KEY,
     cadeira_id VARCHAR(36) NOT NULL,

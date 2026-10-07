@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -19,6 +20,7 @@ public class TasksFragment extends Fragment {
 
     private FragmentTasksBinding binding;
     private CadeiraAdapter adapter;
+    private TasksViewModel viewModel;
 
     @Nullable
     @Override
@@ -31,15 +33,24 @@ public class TasksFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // 1. Inicializar Adapter e RecyclerView
         adapter = new CadeiraAdapter();
         binding.rvCadeiras.setLayoutManager(new LinearLayoutManager(requireContext()));
         binding.rvCadeiras.setAdapter(adapter);
 
-        TasksViewModel viewModel = new ViewModelProvider(this).get(TasksViewModel.class);
+        // 2. Inicializar ViewModel
+        viewModel = new ViewModelProvider(this).get(TasksViewModel.class);
 
-        // Observe Cadeiras from Room Database
+        // 3. Configurar clique nos itens
+        adapter.setOnCadeiraClickListener(cadeira -> {
+            Toast.makeText(getContext(), "Cadeira selecionada: " + cadeira.nome, Toast.LENGTH_SHORT).show();
+        });
+
+        // 4. Observar dados do Room em tempo real e tratar Empty State
         viewModel.getCadeirasLiveData().observe(getViewLifecycleOwner(), cadeiras -> {
-            if (cadeiras != null && !cadeiras.isEmpty()) {
+            boolean temDados = cadeiras != null && !cadeiras.isEmpty();
+
+            if (temDados) {
                 binding.rvCadeiras.setVisibility(View.VISIBLE);
                 binding.tvEmptyStateTasks.setVisibility(View.GONE);
                 adapter.setCadeiras(cadeiras);
@@ -54,5 +65,6 @@ public class TasksFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+        adapter = null;
     }
 }

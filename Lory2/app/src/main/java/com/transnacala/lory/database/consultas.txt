@@ -1,0 +1,56 @@
+mysql> SELECT * FROM lory_db.cadeiras;
++---------+---------------------+-----------------+------------+------------------------------------+-----------+---------------------+-----------+-----------+
+| id      | turma_id            | semestre_id     | docente_id | nome                               | concluida | updated_at          | categoria | progresso |
++---------+---------------------+-----------------+------------+------------------------------------+-----------+---------------------+-----------+-----------+
+| cad-001 | turma-inf-3ano-2026 | semestre-2026-1 | doc-001    | Aplicações Móveis                  |         0 | 2026-10-05 18:36:30 | Geral     |         0 |
+| cad-002 | turma-inf-3ano-2026 | semestre-2026-1 | doc-002    | Engenharia de Software             |         0 | 2026-10-05 18:36:30 | Geral     |         0 |
+| cad-003 | turma-inf-3ano-2026 | semestre-2026-1 | doc-003    | Aplicações Web                     |         0 | 2026-10-05 18:36:30 | Geral     |         0 |
+| cad-004 | turma-inf-3ano-2026 | semestre-2026-1 | doc-003    | Tecnologia Multimídia              |         0 | 2026-10-05 18:36:30 | Geral     |         0 |
+| cad-005 | turma-inf-3ano-2026 | semestre-2026-1 | doc-004    | Protocolos de Comunicação          |         0 | 2026-10-05 18:36:30 | Geral     |         0 |
+| cad-006 | turma-inf-3ano-2026 | semestre-2026-1 | doc-005    | Investigação Operacional           |         0 | 2026-10-05 18:36:30 | Geral     |         0 |
+| cad-007 | turma-inf-3ano-2026 | semestre-2026-1 | doc-006    | Prática Técnica Profissional III   |         0 | 2026-10-05 18:36:30 | Geral     |         0 |
++---------+---------------------+-----------------+------------+------------------------------------+-----------+---------------------+-----------+-----------+
+7 rows in set (0.00 sec)
+
+mysql> SELECT * FROM lory_db.turmas;
++---------------------+----------------+---------------------------+-------------+---------------------+
+| id                  | instituicao_id | nome                      | ano_lectivo | created_at          |
++---------------------+----------------+---------------------------+-------------+---------------------+
+| turma-inf-3ano-2026 | inst-001-islt  | Informática 3º Ano 2026   |        2026 | 2026-10-05 18:36:30 |
++---------------------+----------------+---------------------------+-------------+---------------------+
+1 row in set (0.00 sec)
+
+mysql> SELECT * FROM lory_db.inscricoes;
++------------+-------------------+---------------------+
+| cadeira_id | estudante_id      | updated_at          |
++------------+-------------------+---------------------+
+| cad-001    | usr-chefe-edilson | 2026-10-05 18:36:30 |
+| cad-002    | usr-chefe-edilson | 2026-10-05 18:36:30 |
+| cad-003    | usr-chefe-edilson | 2026-10-05 18:36:30 |
+| cad-004    | usr-chefe-edilson | 2026-10-05 18:36:30 |
+| cad-005    | usr-chefe-edilson | 2026-10-05 18:36:30 |
+| cad-006    | usr-chefe-edilson | 2026-10-05 18:36:30 |
+| cad-007    | usr-chefe-edilson | 2026-10-05 18:36:30 |
++------------+-------------------+---------------------+
+7 rows in set (0.01 sec)
+
+mysql> SELECT * FROM lory_db.semestres;
++-----------------+---------------------+-------------------+--------+---------------------+
+| id              | turma_id            | nome              | activo | updated_at          |
++-----------------+---------------------+-------------------+--------+---------------------+
+| semestre-2026-1 | turma-inf-3ano-2026 | 1º Semestre 2026  |      1 | 2026-10-05 18:36:30 |
++-----------------+---------------------+-------------------+--------+---------------------+
+1 row in set (0.00 sec)
+
+mysql> SELECT * FROM lory_db.docentes;
++---------+---------------------+---------------------------------+----------+---------------------+
+| id      | turma_id            | nome                            | contacto | updated_at          |
++---------+---------------------+---------------------------------+----------+---------------------+
+| doc-001 | turma-inf-3ano-2026 | Dr. Tonecas dos Santos António  | NULL     | 2026-10-05 18:36:30 |
+| doc-002 | turma-inf-3ano-2026 | Dr. Nelson Luís Mussa           | NULL     | 2026-10-05 18:36:30 |
+| doc-003 | turma-inf-3ano-2026 | M.Sc. Helder Manuel             | NULL     | 2026-10-05 18:36:30 |
+| doc-004 | turma-inf-3ano-2026 | Dr. Raul Júlio                  | NULL     | 2026-10-05 18:36:30 |
+| doc-005 | turma-inf-3ano-2026 | M.Sc. Sanito Joaquim Alfredo    | NULL     | 2026-10-05 18:36:30 |
+| doc-006 | turma-inf-3ano-2026 | Dr. Juvêncio Matias Sivala      | NULL     | 2026-10-05 18:36:30 |
++---------+---------------------+---------------------------------+----------+---------------------+
+6 rows in set (0.00 sec)

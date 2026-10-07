@@ -7,6 +7,7 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 
 import com.transnacala.lory.data.local.entity.GrupoEntity;
+import com.transnacala.lory.data.local.model.GrupoComCadeira;
 import com.transnacala.lory.data.local.entity.UtilizadorEntity;
 import com.transnacala.lory.repository.CadeiraRepository;
 import com.transnacala.lory.repository.EventoRepository;
@@ -49,7 +50,7 @@ public class ProfileViewModel extends AndroidViewModel {
         return userRepository.getUtilizadoresCountLiveData();
     }
 
-    public LiveData<List<GrupoEntity>> getGruposLiveData() {
+    public LiveData<List<GrupoComCadeira>> getGruposLiveData() {
         return grupoRepository.getGruposLiveData();
     }
 

@@ -1,7 +1,7 @@
 package com.transnacala.lory.utils;
 
 public class Constants {
-    public static final String BASE_URL = "https://caring-treo-polls-looking.trycloudflare.com/";
+    public static final String BASE_URL = "https://behalf-dip-steel-mix.trycloudflare.com/";
 
     public static final String PREF_NAME = "lory_session_prefs";
     public static final String KEY_JWT_TOKEN = "jwt_token";

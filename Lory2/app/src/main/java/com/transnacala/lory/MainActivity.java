@@ -18,6 +18,8 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.transnacala.lory.data.local.AppDatabase;
@@ -31,11 +33,11 @@ import com.transnacala.lory.ui.fragment.HomeFragment;
 import com.transnacala.lory.ui.fragment.PollsFragment;
 import com.transnacala.lory.ui.fragment.ProfileFragment;
 import com.transnacala.lory.ui.fragment.TasksFragment;
+import com.transnacala.lory.ui.fragment.EventsFragment;
 import com.transnacala.lory.utils.SessionManager;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -44,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
     private EnqueteRepository enqueteRepository;
     private GrupoRepository grupoRepository;
     private SessionManager sessionManager;
-    private int currentTab = 1; // 1: Home, 2: Tasks, 3: Polls, 4: Profile
+    private int currentTab = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
         grupoRepository = new GrupoRepository(this);
         sessionManager = new SessionManager(this);
 
-        // Disparar Sincronização Inicial (Pull do Servidor para o Room) ao abrir
+        // Refresh now and schedule periodic server reconciliation.
         SyncManager.enqueueSync(this);
 
         // Set default fragment
@@ -80,8 +82,9 @@ public class MainActivity extends AppCompatActivity {
     private void setupNavigation() {
         binding.navHome.setOnClickListener(v -> switchFragment(new HomeFragment(), 1));
         binding.navTasks.setOnClickListener(v -> switchFragment(new TasksFragment(), 2));
-        binding.navPolls.setOnClickListener(v -> switchFragment(new PollsFragment(), 3));
-        binding.navProfile.setOnClickListener(v -> switchFragment(new ProfileFragment(), 4));
+        binding.navEvents.setOnClickListener(v -> switchFragment(new EventsFragment(), 3));
+        binding.navPolls.setOnClickListener(v -> switchFragment(new PollsFragment(), 4));
+        binding.navProfile.setOnClickListener(v -> switchFragment(new ProfileFragment(), 5));
 
         binding.fabAdd.setOnClickListener(v -> showCreateOptionsDialog());
     }
@@ -103,6 +106,7 @@ public class MainActivity extends AppCompatActivity {
         // Reset all tabs
         setTabStyle(binding.icNavHome, binding.tvNavHome, false, textSecondary);
         setTabStyle(binding.icNavTasks, binding.tvNavTasks, false, textSecondary);
+        setTabStyle(binding.icNavEvents, binding.tvNavEvents, false, textSecondary);
         setTabStyle(binding.icNavPolls, binding.tvNavPolls, false, textSecondary);
         setTabStyle(binding.icNavProfile, binding.tvNavProfile, false, textSecondary);
 
@@ -115,9 +119,12 @@ public class MainActivity extends AppCompatActivity {
                 setTabStyle(binding.icNavTasks, binding.tvNavTasks, true, primaryDarkBlue);
                 break;
             case 3:
-                setTabStyle(binding.icNavPolls, binding.tvNavPolls, true, primaryDarkBlue);
+                setTabStyle(binding.icNavEvents, binding.tvNavEvents, true, primaryDarkBlue);
                 break;
             case 4:
+                setTabStyle(binding.icNavPolls, binding.tvNavPolls, true, primaryDarkBlue);
+                break;
+            case 5:
                 setTabStyle(binding.icNavProfile, binding.tvNavProfile, true, primaryDarkBlue);
                 break;
         }
@@ -172,28 +179,8 @@ public class MainActivity extends AppCompatActivity {
         typeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spType.setAdapter(typeAdapter);
 
-        // Cadeiras Spinner from Room
-        List<CadeiraEntity> cadeirasList = new ArrayList<>();
-        List<String> cadeirasNames = new ArrayList<>();
-
-        Executors.newSingleThreadExecutor().execute(() -> {
-            AppDatabase db = AppDatabase.getInstance(MainActivity.this);
-            List<CadeiraEntity> list = db.cadeiraDao().getCadeirasPendentes();
-            if (list != null && !list.isEmpty()) {
-                cadeirasList.addAll(list);
-                for (CadeiraEntity c : list) {
-                    cadeirasNames.add(c.nome);
-                }
-            } else {
-                cadeirasNames.add("Engenharia de Software II");
-            }
-
-            runOnUiThread(() -> {
-                ArrayAdapter<String> cadAdapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, cadeirasNames);
-                cadAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                spCadeira.setAdapter(cadAdapter);
-            });
-        });
+        List<CadeiraEntity> cadeirasList = observeCadeiras(spCadeira,
+                view.findViewById(R.id.tv_event_cadeira_status), dialog);
 
         view.findViewById(R.id.btn_cancel_event).setOnClickListener(v -> dialog.dismiss());
 
@@ -208,15 +195,17 @@ public class MainActivity extends AppCompatActivity {
             }
 
             if (date.isEmpty()) {
-                date = "2026-11-15 10:00:00";
+                etDate.setError("Informe a data e hora do evento");
+                return;
             }
 
-            String cadeiraId = "cad-01";
             int selectedPos = spCadeira.getSelectedItemPosition();
-            if (selectedPos >= 0 && selectedPos < cadeirasList.size()) {
-                cadeiraId = cadeirasList.get(selectedPos).id;
+            if (selectedPos < 0 || selectedPos >= cadeirasList.size()) {
+                Toast.makeText(MainActivity.this, R.string.event_requires_cadeira, Toast.LENGTH_LONG).show();
+                return;
             }
 
+            String cadeiraId = cadeirasList.get(selectedPos).id;
             eventoRepository.insertEvento(cadeiraId, selectedType, title, date);
             dialog.dismiss();
             Toast.makeText(MainActivity.this, "Evento criado com sucesso!", Toast.LENGTH_SHORT).show();
@@ -270,6 +259,9 @@ public class MainActivity extends AppCompatActivity {
 
         EditText etName = view.findViewById(R.id.et_group_name);
         EditText etTheme = view.findViewById(R.id.et_group_theme);
+        Spinner spCadeira = view.findViewById(R.id.sp_group_cadeira);
+        List<CadeiraEntity> cadeirasList = observeCadeiras(spCadeira,
+                view.findViewById(R.id.tv_group_cadeira_status), dialog);
 
         view.findViewById(R.id.btn_cancel_group).setOnClickListener(v -> dialog.dismiss());
 
@@ -282,12 +274,46 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            String cadeiraId = "cad-01";
+            int selectedPos = spCadeira.getSelectedItemPosition();
+            if (selectedPos < 0 || selectedPos >= cadeirasList.size()) {
+                Toast.makeText(MainActivity.this, R.string.event_requires_cadeira, Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            String cadeiraId = cadeirasList.get(selectedPos).id;
             grupoRepository.insertGrupo(cadeiraId, name, theme.isEmpty() ? "Tema Geral" : theme);
             dialog.dismiss();
             Toast.makeText(MainActivity.this, "Grupo criado com sucesso!", Toast.LENGTH_SHORT).show();
         });
 
         dialog.show();
+    }
+
+    private List<CadeiraEntity> observeCadeiras(Spinner spinner, TextView status, BottomSheetDialog dialog) {
+        List<CadeiraEntity> cadeiras = new ArrayList<>();
+        List<String> nomes = new ArrayList<>();
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this, android.R.layout.simple_spinner_item, nomes);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+
+        LiveData<List<CadeiraEntity>> cadeirasLiveData =
+                AppDatabase.getInstance(this).cadeiraDao().getCadeirasLiveData();
+        Observer<List<CadeiraEntity>> observer = atualizadas -> {
+            cadeiras.clear();
+            nomes.clear();
+            if (atualizadas != null) {
+                cadeiras.addAll(atualizadas);
+                for (CadeiraEntity cadeira : atualizadas) {
+                    nomes.add(cadeira.nome);
+                }
+            }
+            adapter.notifyDataSetChanged();
+            status.setVisibility(nomes.isEmpty() ? View.VISIBLE : View.GONE);
+        };
+
+        cadeirasLiveData.observe(this, observer);
+        dialog.setOnDismissListener(ignored -> cadeirasLiveData.removeObserver(observer));
+        return cadeiras;
     }
 }

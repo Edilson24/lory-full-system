@@ -7,6 +7,7 @@ import androidx.lifecycle.LiveData;
 import com.transnacala.lory.data.local.AppDatabase;
 import com.transnacala.lory.data.local.dao.GrupoDao;
 import com.transnacala.lory.data.local.entity.GrupoEntity;
+import com.transnacala.lory.data.local.model.GrupoComCadeira;
 import com.transnacala.lory.sync.SyncManager;
 import com.transnacala.lory.utils.Constants;
 
@@ -25,7 +26,7 @@ public class GrupoRepository {
         this.grupoDao = db.grupoDao();
     }
 
-    public LiveData<List<GrupoEntity>> getGruposLiveData() {
+    public LiveData<List<GrupoComCadeira>> getGruposLiveData() {
         return grupoDao.getGruposLiveData();
     }
 
